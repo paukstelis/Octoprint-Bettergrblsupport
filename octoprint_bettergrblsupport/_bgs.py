@@ -295,6 +295,7 @@ def on_event(_plugin, event, payload):
             _plugin._printer.commands(["~"], force=True)
         elif not _plugin.grblState.upper() in ("IDLE", "CHECK"):
             # we have to stop This
+            _plugin._logger.debug("cancelling job,state is: {0}".format(_plugin.grblState))
             _plugin._printer.cancel_print()
             return
 
@@ -591,7 +592,8 @@ def process_grbl_status_msg(_plugin, msg):
     hasA = _plugin._settings.get(["hasA"])
     hasB = _plugin._settings.get(["hasB"])
     match = re.search(r'<(-?[^,]+)[,|][WM]Pos:(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),?(-?[\d\.]+)?,?(-?[\d\.]+)?', msg)
-    response = 'X:{1} Y:{2} Z:{3} E:0 {original}'.format(*match.groups(), original=msg)
+    #response = 'X:{1} Y:{2} Z:{3} E:0 {original}'.format(*match.groups(), original=msg)
+    response = 'X:{1} Y:{2} Z:{3} E:0 '.format(*match.groups())
     _plugin.grblMode = "MPos" if "MPos" in msg else "WPos" if "WPos" in msg else "N/A"
     _plugin.grblState = str(match.groups(1)[0])
     _plugin.grblX = float(match.groups(1)[1])
@@ -601,24 +603,15 @@ def process_grbl_status_msg(_plugin, msg):
     if match.groups(1)[5]:
         _plugin.grblA = float(match.groups(1)[4])
         _plugin.grblB = float(match.groups(1)[5])
-        
+        response = response+'A:{0} B:{1} '.format(_plugin.grblA, _plugin.grblB)
     if match.groups(1)[4] and not match.groups(1)[5] and hasB:
         _plugin.grblB = float(match.groups(1)[4])
+        reponse = response+'B:{0}'.format(_plugin.grblB)
     else:
         _plugin.grblA = float(match.groups(1)[4])
+        response = response+'A:{0} '.format(_plugin.grblA)
+    response = response+msg
 
-    '''
-    if hasA and hasB:
-        match = re.search(r'<(-?[^,]+)[,|][WM]Pos:(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+)', msg)
-        response = 'X:{1} Y:{2} Z:{3} A:{4} B:{5} E:0 {original}'.format(*match.groups(), original=msg)
-        _plugin.grblMode = "MPos" if "MPos" in msg else "WPos" if "WPos" in msg else "N/A"
-        _plugin.grblState = str(match.groups(1)[0])
-        _plugin.grblX = float(match.groups(1)[1])
-        _plugin.grblY = float(match.groups(1)[2])
-        _plugin.grblZ = float(match.groups(1)[3])
-        _plugin.grblA = float(match.groups(1)[4])
-        _plugin.grblB = float(match.groups(1)[5])
-    '''
     match = re.search(r'.*\|Pn:([XYZABPDHRS]+)', msg)
     if not match is None:
         _plugin.grblActivePins = match.groups(1)[0]
@@ -952,6 +945,34 @@ def defer_do_xy_probe(_plugin, position, axis, sessionId):
 
     do_xy_probe(_plugin, xyProbe._axes, sessionId)
 
+def do_xscan_zprobe(_plugin, sessionId):
+    #_plugin._logger.debug("_bgs: do_xscan_zprobe sessionId=[{}]".format(sessionId))
+
+    #Bypass zprobe, we don't care about notifications we are writing to a file    
+    #zProbe = ZProbe(_plugin, xscan_zprobe_hook, sessionId)
+
+    xl, yl, zl = get_axes_limits(_plugin)
+    zTravel = zl if _plugin.zProbeTravel == 0 else _plugin.zProbeTravel
+    zTravel = zTravel * -1 * _plugin.invertZ
+
+    #Get our settings and spew out some gcode....this will be a long message
+    zprobe_xdir = int(_plugin._settings.get(["zprobe_xdir"]))
+    zprobe_xlen = int(_plugin._settings.get(["zprobe_xlen"]))
+    zprobe_xhop = int(_plugin._settings.get(["zprobe_xzhop"]))
+    zprobe_xinc = int(_plugin._settings.get(["zprobe_xinc"]))
+    total_xsteps = int(zprobe_xlen/zprobe_xinc)
+    xsteps = 1
+    #First probing at X = 0
+    gcode = []
+    gcode.append("G91 G21 G38.2 Z{} F100".format(zTravel))
+    while xsteps < total_xsteps:
+        gcode.append("G91 G21 G1 Z{} F500".format(zprobe_xhop))
+        gcode.append("G91 G21 G1 X{} F500".format(zprobe_xinc*zprobe_xdir))
+        gcode.append("G91 G21 G38.2 Z{} F100".format(zTravel))
+        xsteps+=1
+    gcode.append("SCANDONE")
+    _plugin._printer.commands(gcode)
+    #zProbe._locations = [{"gcode": gcode,  "action": "xscan_zprobe", "location": "Current"}]
 
 def do_simple_zprobe(_plugin, sessionId):
     _plugin._logger.debug("_bgs: do_simple_zprobe sessionId=[{}]".format(sessionId))

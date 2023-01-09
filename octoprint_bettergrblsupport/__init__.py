@@ -192,6 +192,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.handshakeSent = False
 
         self.octoprintVersion = octoprint.server.VERSION
+        self.datafolder = ''
+        self.datafile = 'bowlscan.txt'
+        self.xscan = False
 
         # load up our item/value pairs for errors, warnings, and settings
         _bgs.load_grbl_descriptions(self)
@@ -248,6 +251,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             useDevChannel = False,
             zprobeMethod = "SIMPLE",
             zprobeCalc = "MIN",
+            zprobe_xdir = -1,
+            zprobe_xlen = 90,
+            zprobe_xzhop = 10,
+            zprobe_xinc = 1,
             autoSleep = False,
             autoSleepInterval = 20,
             autoCooldown = False,
@@ -270,6 +277,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_after_startup(self):
         self._logger.debug("__init__: on_after_startup")
+        self.datafolder = self.get_plugin_data_folder()
 
         # establish initial state for printer status
         self._settings.set_boolean(["is_printing"], self._printer.is_printing())
@@ -330,6 +338,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.zProbeOffset = float(self._settings.get(["zProbeOffset"]))
         self.zProbeTravel = float(self._settings.get(["zProbeTravel"]))
         self.zProbeEndPos = float(self._settings.get(["zProbeEndPos"]))
+        self.zProbeXDir = int(self._settings.get(["zprobe_xdir"]))
+        self.zProbeXLen = int(self._settings.get(["zprobe_xlen"]))
 
         # hardcoded global settings -- should revisit how I manage these
         self._settings.global_set_boolean(["feature", "modelSizeDetection"], not self.disableModelSizeDetection)
@@ -648,6 +658,18 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 )
         )
 
+    def parse_probe(self, line):
+        match = re.search(".*:([-]*\d*\.*\d*),0\.000,([-]*\d*\.*\d*),.*", line)
+        self._logger.debug("Parse probe data")
+        return str((float(match.groups(1)[0]), float(match.groups(1)[1])))
+
+
+    def write_datafile(self, data):
+        path = os.path.join(self.datafolder, self.datafile)
+        with open(path, "a") as settings_file:
+            settings_file.write(data)
+        settings_file.close()
+        self._logger.debug("wrote data file")
 
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
@@ -660,7 +682,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
         # suppress temperature if machine is printing
         if "M105" in cmd.upper() or cmd.startswith(self.statusCommand):
-            if (self.disablePolling and self._printer.is_printing()) or len(self.lastRequest) > 0 or self.noStatusRequests:
+            if (self.disablePolling and self._printer.is_printing()) or len(self.lastRequest) > 0 or self.noStatusRequests or self.xscan:
                 self._logger.debug('Ignoring %s', cmd)
                 return (None, )
             else:
@@ -750,6 +772,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 subprocess.call(self.m9Command, shell=True)
 
                 return (None,)
+        
+        if cmd.upper() == "SCANDONE":
+            self.xscan = False
+            return (None, )
 
         # Grbl 1.1 Realtime Commands (requires Octoprint 1.8.0+)
         # see https://github.com/OctoPrint/OctoPrint/pull/4390
@@ -1080,7 +1106,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         # add a notification if we just z-probed
         # _bgs will pick this up if zProbe is active
         if "PRB:" in line.upper():
-            _bgs.add_notifications(self, [line])
+            if self._settings.get(["zprobeMethod"]) == "XSCAN" and self.xscan:
+                self._logger.debug("Got xscan")
+                #parse x and z and append them to a file
+                data = self.parse_probe(line)
+                self.write_datafile(data)
+            else:
+                _bgs.add_notifications(self, [line])
             return
 
         # add to our lastResponse if this is not an acknowledgment
@@ -1364,8 +1396,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     method = self._settings.get(["zprobeMethod"])
                     if method == "SIMPLE":
                         _bgs.do_simple_zprobe(self, sessionId)
-                    else:
+                    if method =="MULTIPOINT":
                         _bgs.do_multipoint_zprobe(self, sessionId)
+                    if method == "XSCAN":
+                        _bgs.do_xscan_zprobe(self, sessionId)
+                        self.xscan = True
                 elif axis == "ALL":
                     _bgs.do_xyz_probe(self, sessionId)
                 return
@@ -1424,6 +1459,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
         if command == "origin":
             axis = data.get("origin_axis")
+            hasA = self._settings.get(["hasA"])
+            hasB = self._settings.get(["hasB"])
+            extra_axes = ""
+            if hasA:
+                extra_axes = extra_axes+"A0 "
+            if hasB:
+                extra_axes = extra_axes+"B0"
 
             program = int(float(self.grblCoordinateSystem.replace("G", "")))
             program = -53 + program
@@ -1436,8 +1478,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 self._printer.commands("G91 G10 P{} L20 Z0".format(program))
             elif axis == "XY":
                 self._printer.commands("G91 G10 P{} L20 X0 Y0".format(program))
+            elif axis == "A" and hasA:
+                self._printer.commands("G91 G10 P{} L20 A0".format(program))
+            elif axis == "B" and hasB:
+                self._printer.commands("G91 G10 P{} L20 B0".format(program))
+            elif axis == "A" and hasA:
+                self._printer.commands("G91 G10 P{} L20 A0".format(program))
+            elif axis == "B" and hasB:
+                self._printer.commands("G91 G10 P{} L20 B0".format(program))
             else:
-                self._printer.commands("G91 G10 P{} L20 X0 Y0 Z0".format(program))
+                self._printer.commands("G91 G10 P{0} L20 X0 Y0 Z0 {1}".format(program, extra_axes))
 
             _bgs.add_notifications(self, ["Coordinate system {} home for {} set".format(program, axis)])
             return

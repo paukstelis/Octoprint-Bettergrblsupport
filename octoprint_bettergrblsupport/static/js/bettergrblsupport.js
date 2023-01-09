@@ -773,9 +773,10 @@ $(function() {
         self.modeClick = function() {
           if (self.is_operational() && !self.is_printing()) {
             if (self.mode() == "WPos") {
-              OctoPrint.control.sendGcode(["$10=1", "?", "$$"]);
+            //changes for grblhal
+              OctoPrint.control.sendGcode(["$10=156", "?", "$$"]);
             } else {
-              OctoPrint.control.sendGcode(["$10=0", "?", "$$"]);
+              OctoPrint.control.sendGcode(["$10=157", "?", "$$"]);
             }
           }
         }

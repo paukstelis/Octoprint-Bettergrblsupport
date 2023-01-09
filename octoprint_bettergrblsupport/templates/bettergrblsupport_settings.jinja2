@@ -125,6 +125,24 @@
 
 			<br>
 
+			<label class="control-label">X Scan Length</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xlen, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
+			</div>
+			<label class="control-label">X Scan Increments</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xinc, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
+			</div>
+			<label class="control-label">X Scan Direction (1 or -1)</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xdir, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
+			</div>
+			<label class="control-label">X Scan Z pulloff</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xzhop, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
+			</div>
+			<br>
+
 			<h5><b>Miscellaneous</b></h5>
 
 			<label class="control-label">Initial Jog Distance</label>

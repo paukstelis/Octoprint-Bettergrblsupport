@@ -1231,9 +1231,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def on_api_command(self, command, data):
         self._logger.debug("__init__: on_api_command data=[{}]".format(data))
 
-        # get our max rates and limits
+        # get our max rates and limits, any extra axes
         xf, yf, zf = _bgs.get_axes_max_rates(self)
         xl, yl, zl = _bgs.get_axes_limits(self)
+        hasA = self._settings.get(["hasA"])
+        hasB = self._settings.get(["hasB"])
+        extra_axes = ""
+        if hasA:
+            extra_axes = extra_axes+"A0 "
+        if hasB:
+            extra_axes = extra_axes+"B0"
 
         if command == "cancelProbe":
             _bgs.grbl_alarm_or_error_occurred(self)
@@ -1362,13 +1369,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
         if command == "move":
             sessionId = data.get("sessionId")
-            hasA = self._settings.get(["hasA"])
-            hasB = self._settings.get(["hasB"])
-            extra_axes = ""
-            if hasA:
-                extra_axes = extra_axes+"A0 "
-            if hasB:
-                extra_axes = extra_axes+"B0"
             # do move stuff
             direction = data.get("direction")
             distance = float(data.get("distance"))

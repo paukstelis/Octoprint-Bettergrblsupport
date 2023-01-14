@@ -661,7 +661,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def parse_probe(self, line):
         match = re.search(".*:([-]*\d*\.*\d*),0\.000,([-]*\d*\.*\d*),.*", line)
         self._logger.debug("Parse probe data")
-        return str((float(match.groups(1)[0]), float(match.groups(1)[1])))
+        matchstr = str((float(match.groups(1)[0]), float(match.groups(1)[1])))
+        matchstr += "\n"
+        return matchstr
 
 
     def write_datafile(self, data):
@@ -1409,6 +1411,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     if method =="MULTIPOINT":
                         _bgs.do_multipoint_zprobe(self, sessionId)
                     if method == "XSCAN":
+                        self.datafile = time.strftime("%Y%m%d-%H%M%S") + "_bowlscan.txt"
                         _bgs.do_xscan_zprobe(self, sessionId)
                         self.xscan = True
                 elif axis == "ALL":

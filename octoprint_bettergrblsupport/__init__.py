@@ -255,6 +255,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             zprobe_xlen = 90,
             zprobe_xzhop = 10,
             zprobe_xinc = 1,
+            zprobe_diam = 100,
             autoSleep = False,
             autoSleepInterval = 20,
             autoCooldown = False,
@@ -340,6 +341,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.zProbeEndPos = float(self._settings.get(["zProbeEndPos"]))
         self.zProbeXDir = int(self._settings.get(["zprobe_xdir"]))
         self.zProbeXLen = int(self._settings.get(["zprobe_xlen"]))
+        self.zProbeDiam = int(self._settings.get(["zprobe_diam"]))
 
         # hardcoded global settings -- should revisit how I manage these
         self._settings.global_set_boolean(["feature", "modelSizeDetection"], not self.disableModelSizeDetection)
@@ -778,9 +780,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if cmd.upper() == "SCANDONE":
             self.xscan = False
             #do Blender call here!
-            #os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
-            #                                                        os.path.join(self.datafolder, self.datafile),\
-            #                                                        self.diameter))
+            os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
+                                                                    os.path.join(self.datafolder, self.datafile),\
+                                                                    self.zprobeDiam))
                                                                     
             return (None, )
 

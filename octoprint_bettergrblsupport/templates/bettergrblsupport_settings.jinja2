@@ -129,6 +129,10 @@
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xlen, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>
+			<label class="control-label">Start Diameter</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_diam, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
+			</div>
 			<label class="control-label">X Scan Increments</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xinc, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm

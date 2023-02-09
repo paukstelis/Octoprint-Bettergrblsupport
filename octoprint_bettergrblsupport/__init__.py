@@ -663,8 +663,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def parse_probe(self, line):
         match = re.search(".*:([-]*\d*\.*\d*),0\.000,([-]*\d*\.*\d*),.*", line)
         self._logger.debug("Parse probe data")
-        matchstr = "{0},{1}".format(match.groups(1)[0],match.groups(1)[1])
-        matchstr += "\n"
+        self._logger.debug(line)
+        matchstr = ''
+        if match:
+            matchstr = "{0},{1}".format(match.groups(1)[0],match.groups(1)[1])
+            matchstr += "\n"
         return matchstr
 
 

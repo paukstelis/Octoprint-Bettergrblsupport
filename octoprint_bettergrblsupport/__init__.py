@@ -785,7 +785,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             #do Blender call here!
             os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
                                                                     os.path.join(self.datafolder, self.datafile),\
-                                                                    self.zprobeDiam))
+                                                                    self.zProbeDiam))
                                                                     
             return (None, )
 

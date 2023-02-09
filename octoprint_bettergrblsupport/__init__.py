@@ -661,8 +661,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def parse_probe(self, line):
         match = re.search(".*:([-]*\d*\.*\d*),0\.000,([-]*\d*\.*\d*),.*", line)
         self._logger.debug("Parse probe data")
-        matchstr = str((float(match.groups(1)[0]), float(match.groups(1)[1])))
-        matchstr += ",\n"
+        matchstr = str(float(match.groups(1)[0]), float(match.groups(1)[1]))
+        matchstr += "\n"
         return matchstr
 
 
@@ -777,6 +777,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         
         if cmd.upper() == "SCANDONE":
             self.xscan = False
+            #do Blender call here!
+            #os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
+            #                                                        os.path.join(self.datafolder, self.datafile),\
+            #                                                        self.diameter))
+                                                                    
             return (None, )
 
         # Grbl 1.1 Realtime Commands (requires Octoprint 1.8.0+)

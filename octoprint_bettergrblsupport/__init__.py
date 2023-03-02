@@ -1424,6 +1424,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                         self.datafile = time.strftime("%Y%m%d-%H%M%S") + "_bowlscan.txt"
                         _bgs.do_xscan_zprobe(self, sessionId)
                         self.xscan = True
+                        diam = self._settings.get(["zprobe_diam"])
+                        xlen = self._settings.get(["zprobe_xlen"])
+                        xdir = self._settings.get(["zprobe_xdir"])
+                        xinc = self._settings.get(["zprobe_xinc"])
+                        data = ";diam={0}, xlen={1}, xdir={2}, xinc={3}\n".format(diam, xlen, xdir, xinc)
+                        self.write_datafile(data)
                 elif axis == "ALL":
                     _bgs.do_xyz_probe(self, sessionId)
                 return

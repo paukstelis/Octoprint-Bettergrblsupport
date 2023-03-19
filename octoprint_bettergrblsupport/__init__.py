@@ -993,7 +993,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 newZ = self.grblZ + self.babystep
                 self.babystep = 0
                 self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.grblZ, newZ))
-                cmd.extend("G92 Z{0}".format(newZ))
+                cmd.append("G92 Z{0}".format(newZ))
                 self._logger.info(cmd)
 
         #ADD A and B here

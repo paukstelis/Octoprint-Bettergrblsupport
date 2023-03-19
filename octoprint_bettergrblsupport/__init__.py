@@ -100,6 +100,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.positioning = 0
         self.coolant = "M9"
         self.grblCoordinateSystem = "G54"
+        self.babystep = 0
 
         self.timeRef = 0
 
@@ -988,6 +989,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.grblZ = float(match.groups(1)[0]) if self.positioning == 0 else self.grblZ + float(match.groups(1)[0])
             found = True
             foundZ = True
+            if self.babystep:
+                newZ = self.grblZ + self.babystep
+                self.babystep = 0
+                self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.grblZ, newZ))
+                cmd.extend("G92 Z{0}".format(newZ))
+                self._logger.info(cmd)
 
         #ADD A and B here
         match = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
@@ -1253,6 +1260,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             extra_axes = extra_axes+"A0 "
         if hasB:
             extra_axes = extra_axes+"B0"
+
+        if command == "babydown":
+            #positive value here if doing G92 to reset coordinates
+            self._logger.info("Babydown")
+            self.babystep = 0.1
+        
+        if command == "babyup":
+            #negative value here if doing G92 to reset coordintes
+            self._logger.info("Babyup")
+            self.babystep = -0.1
 
         if command == "cancelProbe":
             _bgs.grbl_alarm_or_error_occurred(self)

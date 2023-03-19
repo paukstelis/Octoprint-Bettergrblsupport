@@ -252,9 +252,29 @@
       <button class="btn" style="width: 140px; border: 1px solid;" data-bind="enable: is_operational() && !is_printing() && state() == 'Alarm', click: function() { sendCommand('unlock') }">Unlock</button>
       <br>
    </span>
-
    <span style="display: inline-block; margin: 0px 10px 0px 10px; vertical-align: middle;">&nbsp;</span>
 </div>
+
+
+
+<div id="babystep_panel" style="text-align: center; overflow: hidden; margin: 0px 0px 0px 0px;" valign="top" align="center">
+  <span style="display: inline-block; margin: 0px 5px 0px 0px; vertical-align: middle;">&nbsp;</span>
+
+      <span id="babystep-minus" style="border: 1px solid; border-radius: 10px; display: inline-block; vertical-align: top; padding: 5px 10px 5px 10px; margin: 10px 0px 10px 0px;">
+         <button class="btn" data-bind="enable: is_operational() && is_printing(), click: function() { $root.sendCommand('babydown') }">Babystep-Z -0.1</button>
+      </span>
+  </span>
+
+  <span style="display: inline-block; margin: 0px 5px 0px 5px; vertical-align: middle;">&nbsp;</span>
+      <span id="babystep-plus" style="border: 1px solid; border-radius: 10px; display: inline-block; vertical-align: top; padding: 5px 10px 5px 10px; margin: 10px 0px 10px 0px;">
+         <button class="btn" data-bind="enable: is_operational() && is_printing(), click: function() { $root.sendCommand('babyup') }">Babystep-Z +0.1</button>
+      </span>
+  </span>
+</div>
+
+
+
+
 
 <div id="overrides_panel" style="text-align: center; overflow: hidden; margin: 0px 0px 0px 0px;" valign="top" align="center">
   <span style="display: inline-block; margin: 0px 5px 0px 0px; vertical-align: middle;">&nbsp;</span>

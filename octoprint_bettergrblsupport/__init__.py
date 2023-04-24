@@ -678,6 +678,18 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             settings_file.write(data)
         settings_file.close()
         self._logger.debug("wrote data file")
+    # #-- gcode queuing hook
+    #these need to be in queuing to extend
+    def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, tags, *args, **kwargs):
+        match = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
+        if not match is None:
+            queue_grblZ = float(match.groups(1)[0]) #if self.positioning == 0 else queue_grblZ + float(match.groups(1)[0])
+            if self.babystep:
+                newZ = queue_grblZ + self.babystep
+                self.babystep = 0
+                self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(queue_grblZ, newZ))
+                cmd.extend("G92 Z{:.3f}".format(newZ))
+                self._logger.info(cmd)
 
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
@@ -989,12 +1001,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.grblZ = float(match.groups(1)[0]) if self.positioning == 0 else self.grblZ + float(match.groups(1)[0])
             found = True
             foundZ = True
-            if self.babystep:
-                newZ = self.grblZ + self.babystep
-                self.babystep = 0
-                self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.grblZ, newZ))
-                cmd = cmd + ("\nG92 Z{:.3f}\n".format(newZ))
-                self._logger.info(cmd)
 
         #ADD A and B here
         match = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
@@ -1620,4 +1626,5 @@ def __plugin_load__():
         {'octoprint.plugin.softwareupdate.check_config': __plugin_implementation__.get_update_information,
          'octoprint.comm.protocol.gcode.sending': __plugin_implementation__.hook_gcode_sending,
          'octoprint.comm.protocol.gcode.received': __plugin_implementation__.hook_gcode_received,
+         'octoprint.comm.protocol.gcode.queuing': __plugin_implementation__.hook_gcode_queuing,
          "octoprint.filemanager.extension_tree": __plugin_implementation__.get_extension_tree}

@@ -688,7 +688,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         match_z = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
         
         if match_z:
-            self.queue_Z = float(match_z.groups(1)[0]) #if self.positioning == 0 else queue_grblZ + float(match.groups(1)[0])
+            self.queue_Z = float(match_z.groups(1)[0])
         
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
             bangle = math.radians(self.bangle)
@@ -831,6 +831,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if cmd.upper() == "DOBANGLE":
             self.do_bangle = True
             self.bangle = self.grblB
+
+            return (None, )
 
         if cmd.upper() == "SCANDONE":
             self.xscan = False

@@ -703,7 +703,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_x = self.queue_X*math.cos(bangle) + self.queue_Z*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
-
+                self._logger.info(newcmd)
                 match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
                 if match_a:
                     self.queue_A = float(match_a.groups(1)[0])
@@ -725,6 +725,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.queue_Z, newZ))
             cmd.extend("G92 Z{:.3f}".format(newZ))
             self._logger.info(cmd)
+        
+        return cmd
 
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
@@ -831,6 +833,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if cmd.upper() == "DOBANGLE":
             self.do_bangle = True
             self.bangle = self.grblB
+            self._logger.info('do_bangle is: {0} and bangle is: {1}'.format(self.do_bangle, self.bangle))
 
             return (None, )
 

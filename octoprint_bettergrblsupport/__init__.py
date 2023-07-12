@@ -103,6 +103,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.coolant = "M9"
         self.grblCoordinateSystem = "G54"
         self.babystep = 0
+        self.do_bangle = False
+        self.bangle = float(0)
 
         self.timeRef = 0
 
@@ -717,18 +719,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
                 cmd = newcmd
 
-
-        if match_z:
-            self.queue_Z = float(match_z.groups(1)[0]) #if self.positioning == 0 else queue_grblZ + float(match.groups(1)[0])
-            if self.babystep:
-                newZ = self.queue_Z + self.babystep
-                self.babystep = 0
-                self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.queue_Z, newZ))
-                cmd.extend("G92 Z{:.3f}".format(newZ))
-                self._logger.info(cmd)
-
-           
-
+        if self.babystep:
+            newZ = self.queue_Z + self.babystep
+            self.babystep = 0
+            self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.queue_Z, newZ))
+            cmd.extend("G92 Z{:.3f}".format(newZ))
+            self._logger.info(cmd)
 
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
@@ -832,6 +828,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
                 return (None,)
         
+        if cmd.upper() == "DOBANGLE":
+            self.do_bangle = True
+            self.bangle = self.grblB
+
         if cmd.upper() == "SCANDONE":
             self.xscan = False
             #do Blender call here!

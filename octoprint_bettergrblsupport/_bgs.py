@@ -322,7 +322,7 @@ def on_event(_plugin, event, payload):
 
         _plugin.is_printing = False
         _plugin._settings.set_boolean(["is_printing"], _plugin.is_printing)
-
+        _plugin.dobangle = False
         return
 
     # Print Cancelling

@@ -703,7 +703,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_x = self.queue_X*math.cos(bangle) + self.queue_Z*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
-                self._logger.info(newcmd)
+                #self._logger.info(newcmd)
                 match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
                 if match_a:
                     self.queue_A = float(match_a.groups(1)[0])

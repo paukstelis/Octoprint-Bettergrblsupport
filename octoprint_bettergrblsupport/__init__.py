@@ -686,7 +686,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     #these need to be in queuing to extend
     def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, tags, *args, **kwargs):
         match_z = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
-        
+        mod_x = 0
+        mod_z = 0
+
         if match_z:
             self.queue_Z = float(match_z.groups(1)[0])
         
@@ -720,7 +722,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 cmd = newcmd
 
         if self.babystep:
-            newZ = self.queue_Z + self.babystep
+            if mod_z:
+                newZ = mod_z + self.babystep
+            else:                
+                newZ = self.queue_Z + self.babystep
             self.babystep = 0
             self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.queue_Z, newZ))
             cmd.extend("G92 Z{:.3f}".format(newZ))
@@ -834,16 +839,19 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.do_bangle = True
             self.bangle = self.grblB
             self._logger.info('do_bangle is: {0} and bangle is: {1}'.format(self.do_bangle, self.bangle))
-
             return (None, )
-
+        
+        if cmd.upper() == "STOPBANGLE":
+            self.do_bangle = False
+            self._logger.info('B angle matrix transformation off')
+            return (None, )
+        
         if cmd.upper() == "SCANDONE":
             self.xscan = False
             #do Blender call here!
             os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
                                                                     os.path.join(self.datafolder, self.datafile),\
-                                                                    self.zProbeDiam))
-                                                                    
+                                                                    self.zProbeDiam))                                                                    
             return (None, )
 
         # Grbl 1.1 Realtime Commands (requires Octoprint 1.8.0+)

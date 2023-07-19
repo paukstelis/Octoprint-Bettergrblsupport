@@ -96,6 +96,20 @@
 
 			<br>
 
+			<label class="control-label">Z Probe X Jog</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_X, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm (0 = use machine Z limit)
+			</div>
+
+			<br>
+
+			<label class="control-label">Z Probe Y Jog</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_Y, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm (0 = use machine Z limit)
+			</div>
+
+			<br>
+
 			<label class="control-label">Z Probe End Position</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zProbeEndPos, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm

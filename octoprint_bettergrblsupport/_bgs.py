@@ -957,6 +957,8 @@ def do_simple_zprobe(_plugin, sessionId):
     _plugin._logger.debug("_bgs: do_simple_zprobe sessionId=[{}]".format(sessionId))
 
     global zProbe
+    zprobe_x = 0
+    zprobe_y = 0
 
     if not zProbe == None:
         zProbe.teardown()
@@ -967,8 +969,22 @@ def do_simple_zprobe(_plugin, sessionId):
     xl, yl, zl = get_axes_limits(_plugin)
     zTravel = zl if _plugin.zProbeTravel == 0 else _plugin.zProbeTravel
     zTravel = zTravel * -1 * _plugin.invertZ
+    zprobe_x = _plugin._settings.get(["zprobe_x"])
+    zprobe_y = _plugin._settings.get(["zprobe_y"])
 
-    gcode = "G91 G21 G38.2 Z{} F100".format(zTravel)
+    if zprobe_x or zprobe_y:
+        frameOrigin = _plugin._settings.get(["frame_origin"])
+        XoI = 1 if "Left" in frameOrigin else -1
+        YoI = 1 if "Bottom" in frameOrigin else -1
+        Xi =  _plugin.invertX
+        Yi =  _plugin.invertY
+        xf, yf, zf = get_axes_max_rates(_plugin)
+        xyf = min([xf, yf]) * (_plugin.framingPercentOfMaxSpeed * .01)
+        gcode = ["{}G91 G21 X{} Y{} F{} ".format("$J=" if is_grbl_one_dot_one(_plugin) else "G0 ", zprobe_x*XoI*Xi, zprobe_y*YoI*Yi, xyf), 
+                "G91 G21 G38.2 Z{} F100".format(zTravel)]
+    else:
+        gcode = "G91 G21 G38.2 Z{} F100".format(zTravel)
+
     zProbe._locations = [{"gcode": gcode,  "action": "simple_zprobe", "location": "Current"}]
 
     _plugin._plugin_manager.send_plugin_message(_plugin._identifier, dict(type="simple_zprobe",

@@ -718,6 +718,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
+                match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
+                if match_s:
+                    self.queue_S = float(match_s.groups(1)[0])
+                    newcmd = newcmd + "S{0} ".format(self.queue_S)
 
                 cmd = newcmd
 

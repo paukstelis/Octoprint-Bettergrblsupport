@@ -838,7 +838,9 @@ def do_xy_probe(_plugin, axes, sessionId):
 
     if xyProbe == None:
         xyProbe = XyProbe(_plugin, xy_probe_hook, axes, sessionId)
-        if axes == "Y": xyProbe._step = 0
+        if axes == "Y": xyProbe._step = 1
+
+    xyProbe._step+=1
 
     xyProbeTravel = float(_plugin._settings.get(["xyProbeTravel"]))
 
@@ -857,7 +859,7 @@ def do_xy_probe(_plugin, axes, sessionId):
             ]
     axis = "X"
 
-    if xyProbe._step == 0 and axes != "X":
+    if xyProbe._step == 1 and axes != "X":
         originInvert = -1 if "Bottom" in frameOrigin else 1
         distance = xyProbeTravel * _plugin.invertY * originInvert
 
@@ -951,6 +953,40 @@ def defer_do_xy_probe(_plugin, position, axis, sessionId):
         ])
 
     do_xy_probe(_plugin, xyProbe._axes, sessionId)
+
+def do_xy_offset(_plugin, sessionId):
+    global xyProbe
+    #_plugin._logger.debug("_bgs: do_xy_offset step=[{}] sessionId=[{}]".format(zProbe._step + 1 if zProbe != None else 0, sessionId))
+    frameOrigin = _plugin._settings.get(["frame_origin"])
+    xy_steps = 3 #this will come from a setting
+    xy_step_distance = 5 #this will come from a setting
+    preamble = "$J=" if is_grbl_one_dot_one(_plugin) else "G1 "
+    xf, yf, zf = get_axes_max_rates(_plugin)
+    feedrate = min([xf, yf]) * (_plugin.framingPercentOfMaxSpeed * .01)
+    gcode = []
+
+    if xyProbe == None:
+        xyProbe = XyProbe(_plugin, xy_offset_hook, sessionId)
+        xyProbe._substep = xy_steps
+    
+    if not xyProbe._substep:
+        xyProbe._step+=1 #X first (0), Y second (1)
+        xyProbe._substep = xy_steps
+        gcode.append() #move back to starting position?
+
+    if xyProbe._step == 0: #X axis
+        originInvert = 1 if "Bottom" in frameOrigin else -1
+        #generate X probing gcode
+        gcode.append("{}".format())
+        xyProbe._substep -= 1
+    elif xyProbe._step == 1: #Y axis
+        originInvert = -1 if "Left" in frameOrigin else 1
+        #generate Y probing gcode
+        xyProbe._substep -= 1
+    else:
+        #done, do calculation
+        dosomecalc     
+        
 
 
 def do_simple_zprobe(_plugin, sessionId):

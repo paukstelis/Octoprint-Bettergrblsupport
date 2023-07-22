@@ -54,7 +54,7 @@ class XyProbe:
         for notification in notifications:
             # [PRB:0.000,0.000,0.000:0]
             if notification.startswith("[PRB:"):
-                #self._step+=1 #this won't work
+                #self._step+=1  #this won't work
 
                 frameOrigin = self._plugin._settings.get(["frame_origin"])
                 xProbeOffset = float(self._plugin._settings.get(["xProbeOffset"])) * self._plugin.invertX

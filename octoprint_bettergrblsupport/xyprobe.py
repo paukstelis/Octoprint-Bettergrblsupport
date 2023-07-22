@@ -71,15 +71,16 @@ class XyProbe:
 
                 firstSplit = notification.replace("[", "").replace("]", "").split(":")
                 secondSplit = firstSplit[1].split(",")
-
+                self._plugin._logger.debug("{}".format(notification))
                 result = int(float(firstSplit[2]))
                 position = float(secondSplit[self._step]) + offset
+                axis  = "X" if self._step == 0 else "Y"
 
                 if (result == 1):
                     self._results.append(position)
-
+                    self._locations.append = {"axis": axis, "coords": (secondSplit[0], secondSplit[1])}
                 notifications.remove(notification)
-                self._hook(self._plugin, result, position, "X" if self._step == 0 else "Y")
+                self._hook(self._plugin, result, position, axis)
 
 
     def teardown(self):

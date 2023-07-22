@@ -891,7 +891,7 @@ def do_xy_probe(_plugin, axes, sessionId):
             gcode.extend(y_gcode * xy_steps)
             
         axis = "Y"
-
+    #this will need to be rethought...
     elif len(xyProbe._results) > 1 or (len(xyProbe._results) > 0 and axis in ("X", "Y")):
         if axes == "XY":
             text = "X/Y Axis Home has been calculated and set to machine position: X[<B>{:.3f}</B>] Y[<B>{:.3f}</B>]".format(xyProbe._results[0], xyProbe._results[1])

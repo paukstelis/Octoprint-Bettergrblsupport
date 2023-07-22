@@ -693,15 +693,15 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.queue_Z = float(match_z.groups(1)[0])
         
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
-            bangle = math.radians(self.bangle)
             match_cmd = re.search(r"^G([\d]+).*", cmd)
-
             newcmd = "G{0} ".format(match_cmd.groups(1)[0])
             match_x = re.search(r".*[Xx]\ *(-?[\d.]+).*", cmd)
             if match_x:
                 self.queue_X = float(match_x.groups(1)[0])
 
             if match_x or match_z:
+                self.bangle = self.grblB
+                bangle = math.radians(self.bangle)
                 mod_x = self.queue_X*math.cos(bangle) + self.queue_Z*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)

@@ -822,9 +822,10 @@ def defer_do_xyz_probe(_plugin, sessionId):
 def do_xy_probe(_plugin, axes, sessionId):
     global xyProbe
     _plugin._logger.debug("_bgs: do_xy_probe step=[{}] axes=[{}] sessionId=[{}]".format(xyProbe._step if xyProbe != None else "N/A", axes, sessionId))
-
     frameOrigin = _plugin._settings.get(["frame_origin"])
-
+    angle_probe = _plugin._settings.get(["angle_probe"])
+    xy_steps = 3 #get as a setting
+    xy_probe_step = 3 #get as a setting
     # do we do not support xy probe for center origins
     if "Center" in frameOrigin:
         _plugin._plugin_manager.send_plugin_message(_plugin._identifier, dict(type="simple_notify",
@@ -850,13 +851,23 @@ def do_xy_probe(_plugin, axes, sessionId):
 
     originInvert = -1 if "Left" in frameOrigin else 1
     distance = xyProbeTravel * _plugin.invertX * originInvert
-
+    
     gcode = [
                 "G21",
                 "G0 G91 X{} F{}".format(distance, xyf),
                 "G0 G91 Z{} F{}".format(15 * _plugin.invertZ * -1, zf),
-                "G38.2 X{} F200".format(distance * -1)
             ]
+    #Multi-probe with Y increments
+    if angle_probe:
+        originInvertY = 1 if "Bottom" in frameOrigin else -1
+        x_gcode = [
+                    "G38.2 X{} F200".format(distance * -1),
+                    "G0 G91 X{} Y{} F{}".format(distance, xy_probe_step*originInvertY, xyf)
+        ]
+        gcode.extend(x_gcode * xy_steps)
+
+    else:
+        gcode.append("G38.2 X{} F200".format(distance * -1))
     axis = "X"
 
     if xyProbe._step == 1 and axes != "X":
@@ -867,8 +878,19 @@ def do_xy_probe(_plugin, axes, sessionId):
                     "G21",
                     "G0 G91 Y{} F{}".format(distance, xyf),
                     "G0 G91 Z{} F{}".format(15 * _plugin.invertZ * -1, zf),
-                    "G38.2 Y{} F200".format(distance * -1)
                 ]
+        #Multi-probe with X increments
+        if angle_probe:
+            originInvertX = 1 if "Left" in frameOrigin else -1
+            y_gcode = [
+                    "G38.2 Y{} F200".format(distance * -1),
+                    "G0 G91 Y{} X{} F{}".format(distance, xy_probe_step*originInvertX, xyf),
+                    ]
+        
+            gcode.extend(y_gcode * xy_steps)
+
+        else:
+            gcode.append("G38.2 Y{} F200".format(distance * -1))
         axis = "Y"
 
     elif len(xyProbe._results) > 1 or (len(xyProbe._results) > 0 and axis in ("X", "Y")):
@@ -953,54 +975,6 @@ def defer_do_xy_probe(_plugin, position, axis, sessionId):
         ])
 
     do_xy_probe(_plugin, xyProbe._axes, sessionId)
-
-def do_xy_offset(_plugin, sessionId):
-    global xyProbe
-    #_plugin._logger.debug("_bgs: do_xy_offset step=[{}] sessionId=[{}]".format(zProbe._step + 1 if zProbe != None else 0, sessionId))
-    frameOrigin = _plugin._settings.get(["frame_origin"])
-    xyProbeTravel = float(_plugin._settings.get(["xyProbeTravel"]))
-    xy_steps = 3 #this will come from a setting
-    xy_step_distance = 5 #this will come from a setting
-    preamble = "$J=" if is_grbl_one_dot_one(_plugin) else "G1 "
-    xf, yf, zf = get_axes_max_rates(_plugin)
-    feedrate = min([xf, yf]) * (_plugin.framingPercentOfMaxSpeed * .01)
-    oIx = -1 if "Left" in frameOrigin else 1
-    oIy = 1 if "Bottom" in frameOrigin else -1 #make Y be positive if starting at bottom
-
-    if xyProbe == None:
-        xyProbe = XyProbe(_plugin, xy_offset_hook, sessionId)
-
-    if xyProbe._step == 0: #X axis
-        distance = xyProbeTravel * _plugin.invertX * oIx
-        #generate X probing gcode
-        gcode = ["G21",
-                "G0 G91 X{} F{}".format(distance, feedrate),
-                "G0 G91 Z{} F{}".format(15 * _plugin.invertZ * -1, zf),
-                 ]
-        probe_gcode = ["G38.2 X{} F200".format(distance * -1),
-                "G0 G91 X{} F{}".format(distance, feedrate),
-                "G0 G91 Y{} F{}".format(xy_step_distance * oIy)
-                ]
-        gcode.extend(probe_gcode * xy_steps)
-        
-    elif xyProbe._step == 1: #Y axis
-        distance = xyProbeTravel * _plugin.invertY* oIy
-        oIx = -1 if "Left" in frameOrigin else 1 #make X positive if staring at left
-        oIy = 1 if "Bottom" in frameOrigin else -1 #make Y be positive if starting at bottom
-        #generate Y probing gcode
-        gcode = ["G21",
-                "G0 G91 Y{} F{}".format(distance, feedrate),
-                "G0 G91 Z{} F{}".format(15 * _plugin.invertZ * -1, zf),
-                 ]
-        probe_gcode = ["G38.2 Y{} F200".format(distance * -1),
-                "G0 G91 X{} F{}".format(distance, feedrate),
-                "G0 G91 Y{} F{}".format(xy_step_distance * oIy)
-                ]
-        gcode.extend(probe_gcode * xy_steps)
-    else:
-        #done, do calculation
-        dosomecalc     
-        
 
 
 def do_simple_zprobe(_plugin, sessionId):

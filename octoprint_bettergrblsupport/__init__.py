@@ -105,6 +105,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.babystep = 0
         self.do_bangle = False
         self.bangle = float(0)
+        self.Afeed = False
+        self.DIAM = 0
+
+        self.match_z = re.compile(r".*[Zz]\ *(-?[\d.]+).*")
+        self.match_x = re.compile(r".*[Xx]\ *(-?[\d.]+).*")
+        self.match_a = re.compile(r".*[Aa]\ *(-?[\d.]+).*")
+        self.match_b = re.compile(r".*[Bb]\ *(-?[\d.]+).*")
+        self.match_f = re.compile(r".*[Ff]\ *(-?[\d.]+).*")
+        self.match_s = re.compile(r".*[Ss]\ *(-?[\d.]+).*")
+        self.match_cmd = re.compile(r"^G([\d]+).*")
 
         self.timeRef = 0
 
@@ -685,7 +695,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     # #-- gcode queuing hook
     #these need to be in queuing to extend
     def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, tags, *args, **kwargs):
-        match_z = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
+        match_z = self.match_z(cmd)
+        match_x = self.match_x(cmd)
+        match_a = self.match_a(cmd)
+        match_b = self.match_b(cmd)
+        match_f = self.match_f(cmd)
+        match_s = self.match_s(cmd)
+        match_cmd = self.match_cmd(cmd)
+
         mod_x = 0
         mod_z = 0
 
@@ -693,9 +710,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.queue_Z = float(match_z.groups(1)[0])
         
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
-            match_cmd = re.search(r"^G([\d]+).*", cmd)
+            
             newcmd = "G{0} ".format(match_cmd.groups(1)[0])
-            match_x = re.search(r".*[Xx]\ *(-?[\d.]+).*", cmd)
+            
             if match_x:
                 self.queue_X = float(match_x.groups(1)[0])
 
@@ -706,24 +723,42 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
                 #self._logger.info(newcmd)
-                match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
+                
                 if match_a:
                     self.queue_A = float(match_a.groups(1)[0])
                     newcmd = newcmd + "A{0} ".format(self.queue_A) 
-                match_b = re.search(r".*[Bb]\ *(-?[\d.]+).*", cmd)
+                
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])
                     newcmd = newcmd + "B{0} ".format(self.queue_B)
-                match_f = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
+                
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
-                match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
+                
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
                     newcmd = newcmd + "S{0} ".format(self.queue_S)
 
                 cmd = newcmd
+
+        if (self.Afeed and match_a and match_f) and not (match_x or match_z):
+            #calculate arc distance
+            a_angle = abs(float(match_a.groups(1)[0]))
+            feed = float(match_f.groups(1)[0])
+            arc_mm = math.radians(a_angle)*(self.DIAM/2)
+            scale = float(arc_mm/a_angle)
+
+            if scale > 1.0:
+                newfeed = feed*scale
+            else:
+                newfeed = feed
+
+            newfeedcmd = "G{0} A{1} F{2:.2f} ".format(match_cmd.groups(1)[0], match_a.groups(1)[0], newfeed)
+            if match_s:
+                power = float(match_s.groups(1)[0])
+                newcmd += "S{0}".format(power)
+            cmd = newfeedcmd
 
         if self.babystep:
             if mod_z:
@@ -850,6 +885,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info('B angle matrix transformation off')
             return (None, )
         
+        if cmd.upper().startswith("AFEED"):
+            diam_match = re.search(r"AFEED ([\d.]+)", cmd)
+            if diam_match:
+                self.Afeed = True
+                self.DIAM = (diam_match.groups(1)[0])
+            self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.DIAM))
+            return (None, )
+
         if cmd.upper() == "SCANDONE":
             self.xscan = False
             #do Blender call here!

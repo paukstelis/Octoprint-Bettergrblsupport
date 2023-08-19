@@ -106,7 +106,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.do_bangle = False
         self.bangle = float(0)
         self.Afeed = False
-        self.DIAM = 0
+        self.DIAM = float(0)
 
         self.match_z = re.compile(r".*[Zz]\ *(-?[\d.]+).*")
         self.match_x = re.compile(r".*[Xx]\ *(-?[\d.]+).*")
@@ -889,7 +889,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             diam_match = re.search(r"AFEED ([\d.]+)", cmd)
             if diam_match:
                 self.Afeed = True
-                self.DIAM = (diam_match.groups(1)[0])
+                self.DIAM = float(diam_match.groups(1)[0])
             self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.DIAM))
             return (None, )
 

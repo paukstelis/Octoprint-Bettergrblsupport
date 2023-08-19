@@ -734,6 +734,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
+                    if self.Afeed:
+                        #self.DIAM is now minimum feedrate
+                        if self.queue_F < self.DIAM:
+                            self.queue_F = self.DIAM
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
                 
                 if match_s:
@@ -741,7 +745,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     newcmd = newcmd + "S{0} ".format(self.queue_S)
 
                 cmd = newcmd
-
+        '''
         if (self.Afeed and match_a and match_f and self._printer.is_printing()) and not (match_x or match_z):
             #calculate arc distance
             a_angle = abs(float(match_a.groups(1)[0]))
@@ -760,7 +764,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 power = float(match_s.groups(1)[0])
                 newfeedcmd += "S{0}".format(power)
             cmd = newfeedcmd
-
+            '''
         if self.babystep:
             if mod_z:
                 newZ = mod_z + self.babystep

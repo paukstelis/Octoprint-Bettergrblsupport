@@ -751,6 +751,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
             if scale > 1.0:
                 newfeed = feed*scale
+                self._logger.info("a_angle:{0}, arc_mm:{1}, scale:{2:.2f}, feed:{3}, newfeed:{4:.2f}".format(a_angle, arc_mm, scale, feed, newfeed))
             else:
                 newfeed = feed
 

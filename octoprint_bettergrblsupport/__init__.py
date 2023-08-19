@@ -695,13 +695,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     # #-- gcode queuing hook
     #these need to be in queuing to extend
     def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, tags, *args, **kwargs):
-        match_z = self.match_z(cmd)
-        match_x = self.match_x(cmd)
-        match_a = self.match_a(cmd)
-        match_b = self.match_b(cmd)
-        match_f = self.match_f(cmd)
-        match_s = self.match_s(cmd)
-        match_cmd = self.match_cmd(cmd)
+        match_z = self.match_z.match(cmd)
+        match_x = self.match_x.match(cmd)
+        match_a = self.match_a.match(cmd)
+        match_b = self.match_b.match(cmd)
+        match_f = self.match_f.match(cmd)
+        match_s = self.match_s.match(cmd)
+        match_cmd = self.match_cmd.match(cmd)
 
         mod_x = 0
         mod_z = 0

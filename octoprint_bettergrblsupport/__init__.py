@@ -742,7 +742,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
                 cmd = newcmd
 
-        if (self.Afeed and match_a and match_f) and not (match_x or match_z):
+        if (self.Afeed and match_a and match_f and self._printer.is_printing()) and not (match_x or match_z):
             #calculate arc distance
             a_angle = abs(float(match_a.groups(1)[0]))
             feed = float(match_f.groups(1)[0])
@@ -758,7 +758,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             newfeedcmd = "G{0} A{1} F{2:.2f} ".format(match_cmd.groups(1)[0], match_a.groups(1)[0], newfeed)
             if match_s:
                 power = float(match_s.groups(1)[0])
-                newcmd += "S{0}".format(power)
+                newfeedcmd += "S{0}".format(power)
             cmd = newfeedcmd
 
         if self.babystep:
@@ -891,6 +891,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             if diam_match:
                 self.Afeed = True
                 self.DIAM = float(diam_match.groups(1)[0])
+            if self.DIAM < 1.0:
+                self.Afeed = False
             self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.DIAM))
             return (None, )
 

@@ -755,7 +755,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             else:
                 newfeed = feed
 
-            newfeedcmd = "G{0} A{1} F{2:.2f} ".format(match_cmd.groups(1)[0], match_a.groups(1)[0], newfeed)
+            newfeedcmd = "G{0} X0.0 A{1} F{2:.2f} ".format(match_cmd.groups(1)[0], match_a.groups(1)[0], newfeed)
             if match_s:
                 power = float(match_s.groups(1)[0])
                 newfeedcmd += "S{0}".format(power)

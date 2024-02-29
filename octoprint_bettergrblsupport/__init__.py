@@ -738,11 +738,18 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         return cmd
 
     def rot_trans_adjust(self, bvalues):
-        bangle = math.radians(bvalues)
-        mod_x = self.tooldistance*math.sin(bangle)
-        mod_z = -mod_x*math.sin(bangle) + self.tooldistance*math.cos(bangle) - self.tooldistance
+        #get absolute positions first
+        bangle = self.grblB + bvalues
+        currentx = self.grblX
+        currentz = self.grblZ
+
+        bangle = math.radians(bangle)
+        mod_x = currentx*math.cos(bangle) + (currentz + self.tooldistance)*math.sin(bangle)
+        #mod_x = self.tooldistance*math.sin(bangle)
+        mod_z = -currentx*math.sin(bangle) + (currentz + self.tooldistance)*math.cos(bangle) - self.tooldistance
         #mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
-        return mod_x, mod_z
+
+        return mod_x+currentx, mod_z+currentz
     
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):

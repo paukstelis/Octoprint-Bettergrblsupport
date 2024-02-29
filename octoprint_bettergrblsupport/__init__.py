@@ -740,7 +740,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def rot_trans_adjust(self, bvalues):
         bangle = math.radians(bvalues)
         mod_x = self.tooldistance*math.sin(bangle)
-        mod_z = self.tooldistance - self.tooldistance*math.cos(bangle)
+        mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
         return mod_x, mod_z
     
     # #-- gcode sending hook
@@ -1545,7 +1545,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 self._printer.commands("{}G91 G21 X{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * self.invertX, xf))
 
             if direction == "southwest":
-                self._printer.commands("{}G91 G21 X{:f} Y{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * -1 * self.invertX, distance * -1 * self.invertY, xf if xf < yf else yf))
+                #self._printer.commands("{}G91 G21 X{:f} Y{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * -1 * self.invertX, distance * -1 * self.invertY, xf if xf < yf else yf))
+                xval, zval = self.rot_trans_adjust(distance)
+                self._printer.commands("{}G91 G21 X{:f} Z{:f} B{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", xval * self.invertX, zval, distance, zf)  )
 
             if direction == "south":
                 self._printer.commands("{}G91 G21 Y{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * -1 * self.invertY, yf))

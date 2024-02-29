@@ -1546,8 +1546,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
             if direction == "southwest":
                 #self._printer.commands("{}G91 G21 X{:f} Y{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * -1 * self.invertX, distance * -1 * self.invertY, xf if xf < yf else yf))
-                xval, zval = self.rot_trans_adjust(distance)
-                self._printer.commands("{}G91 G21 X{:f} Z{:f} B{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", xval * self.invertX, zval, distance, zf)  )
+                xval, zval = self.rot_trans_adjust(distance*-1)
+                self._printer.commands("{}G91 G21 X{:f} Z{:f} B{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", xval * self.invertX, zval, distance*-1, zf)  )
 
             if direction == "south":
                 self._printer.commands("{}G91 G21 Y{:f} F{}".format("$J=" if _bgs.is_grbl_one_dot_one(self) else "G1 ", distance * -1 * self.invertY, yf))

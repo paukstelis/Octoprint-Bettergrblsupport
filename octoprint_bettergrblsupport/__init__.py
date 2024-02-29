@@ -740,7 +740,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     def rot_trans_adjust(self, bvalues):
         bangle = math.radians(bvalues)
         mod_x = self.tooldistance*math.sin(bangle)
-        mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
+        mod_z = -mod_x*math.sin(bangle) + self.tooldistance*math.cos(bangle) - self.tooldistance
+        #mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
         return mod_x, mod_z
     
     # #-- gcode sending hook

@@ -1340,74 +1340,129 @@ $(function() {
     var lastX = 0;
     var lastY = 0;
 
+    function sendkeydown(thekey, keyval, whichkey) {
+        document.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: thekey,
+              keyCode: whichkey, // example values.
+              code: "KeyE", // put everything you need in this object.
+              which: whichkey,
+              shiftKey: false, // you don't need to include values
+              ctrlKey: false,  // if you aren't going to use them.
+              metaKey: false   // these are here for example's sake.
+            })
+          );
+    }
+
     function updateStatus() {
-      var state = document.getElementById("bgs_printer_state").innerText;
-      if (!(state == "Idle" || state == "Jog")) {
-        return;
-      }
-
-      if (!haveEvents) {
-        scangamepads();
-      }
-
-      var i = 0;
-      var j;
-
-      for (j in controllers) {
-        var controller = controllers[j];
-        var x = 0;
-        var y = 0;
-
-        for (i = 0; i < 2; i++) {
-          if (Math.abs(controller.axes[i]) >= .1) {
-            value = controller.axes[i];
-            // value = value + .2 * (value > 0 ? -1 : 1);
-
-            if (i == 1 || i == 3) {
-              invert = -1;
+        var state = document.getElementById("bgs_printer_state").innerText;
+        if (!(state == "Idle" || state == "Jog")) {
+          return;
+        }
+  
+        if (!haveEvents) {
+          scangamepads();
+        }
+  
+        var i = 0;
+        var j;
+  
+        for (j in controllers) {
+          var controller = controllers[j];
+          var x = 0;
+          var y = 0;
+                  //swapping Y and Z
+                  if (controller.buttons[12]["pressed"] == true) {
+                    //Z DOWN
+                    sendkeydown("PgDn",34,34);
+                    controller.buttons[12]["pressed"] = false;
+                  }
+                  if (controller.buttons[13]["pressed"] == true) {
+                    //Z UP
+                    sendkeydown("PgUp",33,33);
+                    controller.buttons[13]["pressed"] = false;
+                  }
+                  if (controller.buttons[14]["pressed"] == true) {
+                    //Z DOWN
+                    sendkeydown("Right",39,39);
+                    controller.buttons[14]["pressed"] = false;
+                  }
+                  if (controller.buttons[15]["pressed"] == true) {
+                    //Z DOWN
+                    sendkeydown("Left",37,37);
+                    controller.buttons[15]["pressed"] = false;
+                  }
+                  //distances
+                  if (controller.buttons[0]["pressed"] == true) {
+                    //0.1
+                    sendkeydown("NP0",98,98);
+                    controller.buttons[0]["pressed"] = false;
+                  }
+                  if (controller.buttons[1]["pressed"] == true) {
+                    //1
+                    sendkeydown("NP1",99,99);
+                    controller.buttons[1]["pressed"] = false;
+                  }
+                  if (controller.buttons[3]["pressed"] == true) {
+                    //5
+                    sendkeydown("NP2",100,100);
+                    controller.buttons[3]["pressed"] = false;
+                  }
+                  if (controller.buttons[2]["pressed"] == true) {
+                    //10
+                    sendkeydown("NP3",101,101);
+                    controller.buttons[2]["pressed"] = false;
+                  }
+          for (i = 0; i < 2; i++) {
+            if (Math.abs(controller.axes[i]) >= .1) {
+              value = controller.axes[i];
+              // value = value + .2 * (value > 0 ? -1 : 1);
+  
+              if (i == 1 || i == 3) {
+                invert = -1;
+              } else {
+                invert = 1;
+              }
+  
+              value = value * 20 * invert;
+  
+              if (invert == -1) {
+                y = value;
+              } else {
+                x = value;
+              }
             } else {
-              invert = 1;
-            }
-
-            value = value * 20 * invert;
-
-            if (invert == -1) {
-              y = value;
-            } else {
-              x = value;
-            }
-          } else {
-            if (i == 1 || i == 3) {
-              y = 0;
-            } else {
-              x = 0;
+              if (i == 1 || i == 3) {
+                y = 0;
+              } else {
+                x = 0;
+              }
             }
           }
         }
-      }
-      if (x != lastX || y != lastY) {
-        if (x == 0 && y == 0) {
-          OctoPrint.control.sendGcode("CANCELJOG");
-          console.log("gamepad centered");
+        if (x != lastX || y != lastY) {
+          if (x == 0 && y == 0) {
+            OctoPrint.control.sendGcode("CANCELJOG");
+            console.log("gamepad centered");
+          }
+  
+          lastX = x;
+          lastY = y;
         }
-
-        lastX = x;
-        lastY = y;
-      }
-
-      if (x != 0 || y != 0) {
-        var fastAxis = 0;
-
-        if (Math.abs(x) > Math.abs(y)) {
-          fastAxis = Math.abs(x);
-        } else {
-          fastAxis = Math.abs(y);
+  
+        if (x != 0 || y != 0) {
+          var fastAxis = 0;
+  
+          if (Math.abs(x) > Math.abs(y)) {
+            fastAxis = Math.abs(x);
+          } else {
+            fastAxis = Math.abs(y);
+          }
+  
+          OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Z" + y + " F" + scaleValue(fastAxis, [1,20], [100,2500]));
+          console.log("x=" + x + " y=" + y);
         }
-
-        OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Y" + y + " F" + scaleValue(fastAxis, [1,20], [100,2500]));
-        console.log("x=" + x + " y=" + y);
       }
-    }
 
     function scangamepads() {
       var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []);

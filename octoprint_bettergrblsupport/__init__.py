@@ -94,6 +94,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.grblZ = float(0)
         self.grblA = float(0)
         self.grblB = float(0)
+        self.offsets = []
         self.queue_Z = float(0)
         self.queue_X = float(0)
         self.grblActivePins = ""
@@ -744,12 +745,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         currentz = self.grblZ
 
         bangle = math.radians(bangle)
-        mod_x = currentx*math.cos(bangle) + (currentz + self.tooldistance)*math.sin(bangle)
-        #mod_x = self.tooldistance*math.sin(bangle)
-        mod_z = -currentx*math.sin(bangle) + (currentz + self.tooldistance)*math.cos(bangle) - self.tooldistance
+        #mod_x = currentx*math.cos(bangle) + (currentz + self.tooldistance)*math.sin(bangle)
+        mod_x = self.tooldistance*math.sin(math.radians(bvalues))
+        mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
         #mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
 
-        return mod_x+currentx, mod_z+currentz
+        return mod_x, mod_z
     
     # #-- gcode sending hook
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
@@ -1165,7 +1166,15 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         # look for a status message
         if 'MPos' in line or 'WPos' in line:
             return _bgs.process_grbl_status_msg(self, line)
-
+        
+        if '[G5' in line:
+            match = re.search(r'\[G(\d\.):(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+)', line)
+            if match:
+                refframe = float(match.groups(1)[0])
+                offsetx = float(match.groups(1)[1])
+                offsety = float(match.groups(1)[2])
+                offsetz = float(match.groups(1)[3])
+                self.offsets.append({"frame" : "G{}", "x_offset" : offsetx, "y_offset" : offsety, "z_offset" : offsetz}.format(refframe))
         # look for an alarm
         if line.lower().startswith('alarm:'):
             return _bgs.process_grbl_alarm(self, line)

@@ -106,6 +106,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.babystep = 0
         self.do_bangle = False
         self.bangle = float(0)
+        self.Afeed = float(0)
         self.tooldistance = 135.0
         self.timeRef = 0
 
@@ -718,7 +719,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 match_f = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
+                    if self.Afeed:
+                        #self.DIAM is now minimum feedrate
+                        if self.queue_F < self.DIAM:
+                            self.queue_F = self.DIAM
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
+
                 match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])

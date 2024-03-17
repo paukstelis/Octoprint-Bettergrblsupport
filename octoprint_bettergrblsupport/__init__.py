@@ -106,7 +106,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.babystep = 0
         self.do_bangle = False
         self.bangle = float(0)
-        self.Afeed = float(0)
+        self.Afeed = False
+        self.DIAM = float(0)
         self.tooldistance = 135.0
         self.timeRef = 0
 
@@ -869,6 +870,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if cmd.upper() == "STOPBANGLE":
             self.do_bangle = False
             self._logger.info('B angle matrix transformation off')
+            return (None, )
+        
+        if cmd.upper().startswith("AFEED"):
+            diam_match = re.search(r"AFEED ([\d.]+)", cmd)
+            if diam_match:
+                self.Afeed = True
+                self.DIAM = float(diam_match.groups(1)[0])
+            if self.DIAM < 1.0:
+                self.Afeed = False
+            self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.DIAM))
             return (None, )
         
         if cmd.upper() == "SCANDONE":

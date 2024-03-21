@@ -688,7 +688,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
     # #-- gcode queuing hook
     #these need to be in queuing to extend
     def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, tags, *args, **kwargs):
+        match_x = re.search(r".*[Xx]\ *(-?[\d.]+).*", cmd)
         match_z = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
+        match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
+        match_b = re.search(r".*[Bb]\ *(-?[\d.]+).*", cmd)
+        match_f = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
+        match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
         mod_x = 0
         mod_z = 0
 
@@ -698,7 +703,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
             match_cmd = re.search(r"^G([\d]+).*", cmd)
             newcmd = "G{0} ".format(match_cmd.groups(1)[0])
-            match_x = re.search(r".*[Xx]\ *(-?[\d.]+).*", cmd)
+            
             if match_x:
                 self.queue_X = float(match_x.groups(1)[0])
 
@@ -709,15 +714,18 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
                 #self._logger.info(newcmd)
-                match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
                 if match_a:
-                    self.queue_A = float(match_a.groups(1)[0])
+                    #get the new radius based on X position
+                    calc_Arad = float(math.radians(match_a.groups(1)[0]))
+                    calc_Y = calc_Arad*(self.DIAM/2)
+                    new_A = calc_Y/(self.DIAM/2 - (self.queue_X - mod_x))
+                    self.queue_A = math.degrees(new_A)
                     newcmd = newcmd + "A{0} ".format(self.queue_A) 
-                match_b = re.search(r".*[Bb]\ *(-?[\d.]+).*", cmd)
+               
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])
                     newcmd = newcmd + "B{0} ".format(self.queue_B)
-                match_f = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
+                
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
                     if self.Afeed:
@@ -726,7 +734,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                             self.queue_F = self.DIAM
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
 
-                match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
                     newcmd = newcmd + "S{0} ".format(self.queue_S)

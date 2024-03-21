@@ -716,7 +716,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 #self._logger.info(newcmd)
                 if match_a:
                     #get the new radius based on X position
-                    calc_Arad = float(math.radians(match_a.groups(1)[0]))
+                    calc_Arad = math.radians(float(match_a.groups(1)[0]))
                     calc_Y = calc_Arad*(self.DIAM/2)
                     new_A = calc_Y/(self.DIAM/2 - (self.queue_X - mod_x))
                     self.queue_A = math.degrees(new_A)

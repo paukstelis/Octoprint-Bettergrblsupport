@@ -107,6 +107,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.do_bangle = False
         self.bangle = float(0)
         self.Afeed = False
+        self.minFeed = float(0)
         self.DIAM = float(0)
         self.tooldistance = 135.0
         self.timeRef = 0
@@ -718,12 +719,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 
                 if not match_a:
                     newA = self.get_new_A(mod_x, self.queue_A)
+                    self.queue_A = newA
                 
                 if match_a:
                     #get the new radius based on X position
                     self.queue_A = float(match_a.groups(1)[0])
                     newA = self.get_new_A(mod_x, self.queue_A)
-                
+                    self.queue_A = newA
+
                 if newA:
                     newcmd = newcmd + "A{0:.4f} ".format((newA)) 
                
@@ -734,9 +737,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
                     if self.Afeed:
-                        #self.DIAM is now minimum feedrate
-                        if self.queue_F < self.DIAM:
-                            self.queue_F = self.DIAM
+                        if self.queue_F < self.minFeed:
+                            self.queue_F = self.minFeed
                     newcmd = newcmd + "F{0} ".format(self.queue_F)
 
                 if match_s:
@@ -895,10 +897,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             diam_match = re.search(r"AFEED ([\d.]+)", cmd)
             if diam_match:
                 self.Afeed = True
-                self.DIAM = float(diam_match.groups(1)[0])
-            if self.DIAM < 1.0:
+                self.minFeed = float(diam_match.groups(1)[0])
+            if self.minFeed < 1.0:
                 self.Afeed = False
-            self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.DIAM))
+            self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.minFeed))
+            return (None, )
+        
+        if cmd.upper().startswith("DIAM"):
+            diam_match = re.search(r"DIAM ([\d.]+)", cmd)
+            if diam_match:
+                self.DIAM = float(diam_match.groups(1)[0])
             return (None, )
         
         if cmd.upper() == "SCANDONE":

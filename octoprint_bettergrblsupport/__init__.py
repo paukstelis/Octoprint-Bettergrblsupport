@@ -696,6 +696,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
         mod_x = 0
         mod_z = 0
+        mod_a = 0
 
         if match_z:
             self.queue_Z = float(match_z.groups(1)[0])
@@ -714,17 +715,21 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
                 #self._logger.info(newcmd)
+                
+                if not match_a:
+                    newA = self.get_new_A(mod_x, self.queue_A)
+                
                 if match_a:
                     #get the new radius based on X position
-                    calc_Arad = math.radians(float(match_a.groups(1)[0]))
-                    calc_Y = calc_Arad*(self.DIAM/2)
-                    new_A = calc_Y/(self.DIAM/2 + (self.queue_X - mod_x))
-                    self.queue_A = math.degrees(new_A)
-                    newcmd = newcmd + "A{0} ".format(self.queue_A) 
+                    self.queue_A = float(match_a.groups(1)[0])
+                    newA = self.get_new_A(mod_x, self.queue_A)
+                
+                if newA:
+                    newcmd = newcmd + "A{0:.4f} ".format((newA)) 
                
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])
-                    newcmd = newcmd + "B{0} ".format(self.queue_B)
+                    newcmd = newcmd + "B{0:.4f} ".format(self.queue_B)
                 
                 if match_f:
                     self.queue_F = float(match_f.groups(1)[0])
@@ -751,6 +756,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info(cmd)
         
         return cmd
+
+    def get_new_A(self, xval, aval):
+        #self.queue_A = float(match_a.groups(1)[0])
+        calc_Arad = math.radians(float(aval))
+        calc_Y = calc_Arad*(self.DIAM/2)
+        new_A = calc_Y/(self.DIAM/2 + (self.queue_X - xval))
+        return math.degrees(new_A)
 
     def rot_trans_adjust(self, bvalues):
         #get absolute positions first

@@ -737,7 +737,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
                     newcmd = newcmd + "S{0} ".format(self.queue_S)
-
+                self._logger.info(newcmd)
                 cmd = newcmd
 
         if self.babystep:

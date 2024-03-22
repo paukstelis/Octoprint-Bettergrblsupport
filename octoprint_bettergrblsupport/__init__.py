@@ -709,7 +709,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             if match_x:
                 self.queue_X = float(match_x.groups(1)[0])
             if match_a:
-                self.queue_A = float(match_a.gropus(1)[0])
+                self.queue_A = float(match_a.groups(1)[0])
             if match_x or match_z or match_a:
                 self.bangle = self.grblB
                 bangle = math.radians(self.bangle)

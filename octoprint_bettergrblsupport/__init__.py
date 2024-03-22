@@ -898,6 +898,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info('Mod A active')
             return (None, )
         
+        if cmd.upper() == "STOPMODA":
+            self.do_mod_a = False
+            self._logger.info('Mod A active')
+            return (None, )
+
         if cmd.upper().startswith("AFEED"):
             diam_match = re.search(r"AFEED ([\d.]+)", cmd)
             if diam_match:

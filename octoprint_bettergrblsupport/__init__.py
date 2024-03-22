@@ -763,7 +763,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         #self.queue_A = float(match_a.groups(1)[0])
         calc_Arad = math.radians(float(aval))
         calc_Y = calc_Arad*(self.DIAM/2)
-        new_A = calc_Y/(self.DIAM/2 + zval)
+        new_A = calc_Y/(self.DIAM/2 - zval)
         return math.degrees(new_A)
 
     def rot_trans_adjust(self, bvalues):

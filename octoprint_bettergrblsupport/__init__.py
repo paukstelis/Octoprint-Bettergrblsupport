@@ -708,7 +708,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             
             if match_x:
                 self.queue_X = float(match_x.groups(1)[0])
-
+            if match_a:
+                self.queue_A = float(match_a.gropus(1)[0])
             if match_x or match_z or match_a:
                 self.bangle = self.grblB
                 bangle = math.radians(self.bangle)
@@ -718,13 +719,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 #self._logger.info(newcmd)
                 
                 if not match_a:
-                    newA = self.get_new_A(mod_x, self.queue_A)
+                    newA = self.get_new_A(mod_z, self.queue_A)
                     self.queue_A = newA
                 
                 if match_a:
                     #get the new radius based on X position
                     self.queue_A = float(match_a.groups(1)[0])
-                    newA = self.get_new_A(mod_x, self.queue_A)
+                    newA = self.get_new_A(mod_z, self.queue_A)
                     self.queue_A = newA
 
                 if newA:
@@ -759,11 +760,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         
         return cmd
 
-    def get_new_A(self, xval, aval):
+    def get_new_A(self, zval, aval):
         #self.queue_A = float(match_a.groups(1)[0])
         calc_Arad = math.radians(float(aval))
         calc_Y = calc_Arad*(self.DIAM/2)
-        new_A = calc_Y/(self.DIAM/2 + (self.queue_X - xval))
+        new_A = calc_Y/(self.DIAM/2 + zval)
         return math.degrees(new_A)
 
     def rot_trans_adjust(self, bvalues):

@@ -105,6 +105,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.grblCoordinateSystem = "G54"
         self.babystep = 0
         self.do_bangle = False
+        self.do_mod_a = False
         self.bangle = float(0)
         self.Afeed = False
         self.minFeed = float(0)
@@ -726,7 +727,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     self.queue_A = float(match_a.groups(1)[0])
                     newA = self.get_new_A(mod_z, self.queue_A)
 
-                if newA:
+                if newA and self.do_mod_a:
                     newcmd = newcmd + "A{0:.4f} ".format((newA)) 
                
                 if match_b:
@@ -890,6 +891,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if cmd.upper() == "STOPBANGLE":
             self.do_bangle = False
             self._logger.info('B angle matrix transformation off')
+            return (None, )
+        
+        if cmd.upper() == "DOMODA":
+            self.do_mod_a = True
+            self._logger.info('Mod A active')
             return (None, )
         
         if cmd.upper().startswith("AFEED"):

@@ -720,13 +720,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 
                 if not match_a:
                     newA = self.get_new_A(mod_z, self.queue_A)
-                    self.queue_A = newA
                 
                 if match_a:
                     #get the new radius based on X position
                     self.queue_A = float(match_a.groups(1)[0])
                     newA = self.get_new_A(mod_z, self.queue_A)
-                    self.queue_A = newA
 
                 if newA:
                     newcmd = newcmd + "A{0:.4f} ".format((newA)) 

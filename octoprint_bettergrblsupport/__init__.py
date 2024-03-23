@@ -727,8 +727,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     self.queue_A = float(match_a.groups(1)[0])
                     newA = self.get_new_A(mod_z, self.queue_A)
 
+
                 if newA and self.do_mod_a:
-                    newcmd = newcmd + "A{0:.4f} ".format((newA)) 
+                    newcmd = newcmd + "A{0:.4f} ".format((newA))
+                else:
+                    newcmd = newcmd + "A{0:.4f} ".format((self.queue_A)) 
                
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])

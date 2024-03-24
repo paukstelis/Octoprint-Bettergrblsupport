@@ -106,10 +106,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.babystep = 0
         self.do_bangle = False
         self.do_mod_a = False
+        self.do_mod_z = False
         self.bangle = float(0)
         self.Afeed = False
         self.minFeed = float(0)
         self.DIAM = float(0)
+        self.maxarc = float(0)
+        self.minz = float(0)
         self.tooldistance = 135.0
         self.timeRef = 0
 
@@ -711,24 +714,21 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 self.queue_X = float(match_x.groups(1)[0])
             if match_a:
                 self.queue_A = float(match_a.groups(1)[0])
+
+            if self.do_mod_z:
+                zmod = self.adjust_Z(self.queue_Z, self.queue_A)
+            else:
+                zmod = 0.0
+
             if match_x or match_z or match_a:
                 self.bangle = self.grblB
                 bangle = math.radians(self.bangle)
-                mod_x = self.queue_X*math.cos(bangle) + self.queue_Z*math.sin(bangle)
-                mod_z = -self.queue_X*math.sin(bangle) + self.queue_Z*math.cos(bangle)
+                mod_x = self.queue_X*math.cos(bangle) + (self.queue_Z - zmod)*math.sin(bangle)
+                mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
                 newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
-                #self._logger.info(newcmd)
-                
-                if not match_a:
-                    newA = self.get_new_A(mod_z, self.queue_A)
-                
-                if match_a:
-                    #get the new radius based on X position
-                    self.queue_A = float(match_a.groups(1)[0])
-                    newA = self.get_new_A(mod_z, self.queue_A)
+                newA = self.get_new_A(mod_z, self.queue_A)
 
-
-                if newA and self.do_mod_a:
+                if self.do_mod_a:
                     newcmd = newcmd + "A{0:.4f} ".format((newA))
                 else:
                     newcmd = newcmd + "A{0:.4f} ".format((self.queue_A)) 
@@ -768,6 +768,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         calc_Y = calc_Arad*(self.DIAM/2)
         new_A = calc_Y/(self.DIAM/2 + zval)
         return math.degrees(new_A)
+
+    def adjust_Z(self, aval, zval):
+        modDiam = (self.DIAM/2) + zval
+        aval = math.radians(aval)
+        #in case weird things happen
+        if aval > self.maxarc/2:
+            return 0.0
+        diff = math.sqrt(((self.maxarc/2)**2) - (aval**2))
+        zmod = modDiam - (modDiam*math.cos(diff))
+        return zmod
 
     def rot_trans_adjust(self, bvalues):
         #get absolute positions first
@@ -905,6 +915,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.do_mod_a = False
             self._logger.info('Mod A active')
             return (None, )
+        
+        if cmd.upper().startswith("MAXARC"):
+            minmax_match = re.search(r"MINMAX ([-]*\d*\.*\d*) ([-]*\d*\.*\d*)", cmd)
+            if minmax_match:
+                self.maxarc = math.radians(minmax_match.groups(1)[0])
+                self.minz = minmax_match.groups(1)[1]
+                self._logger.info(self.maxarc, self.minz)
 
         if cmd.upper().startswith("AFEED"):
             diam_match = re.search(r"AFEED ([\d.]+)", cmd)

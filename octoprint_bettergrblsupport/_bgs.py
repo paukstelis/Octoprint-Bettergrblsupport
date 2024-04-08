@@ -591,7 +591,9 @@ def process_grbl_status_msg(_plugin, msg):
     #need to redefine much of this if we have more axes
     hasA = _plugin._settings.get(["hasA"])
     hasB = _plugin._settings.get(["hasB"])
-    match = re.search(r'<(-?[^,]+)[,|][WM]Pos:(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),?(-?[\d\.]+)?,?(-?[\d\.]+)?', msg)
+    hasC = _plugin._settings.get(["hasC"])
+    #match = re.search(r'<(-?[^,]+)[,|][WM]Pos:(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),?(-?[\d\.]+)?,?(-?[\d\.]+)?', msg)
+    match = re.search(r'<(-?[^,]+)[,|][WM]Pos:(-?[\d\.]+),(-?[\d\.]+),(-?[\d\.]+),?(-?[\d\.]+)?,?(-?[\d\.]+)?,?(-?[\d\.]+)?', msg)
     #response = 'X:{1} Y:{2} Z:{3} E:0 {original}'.format(*match.groups(), original=msg)
     response = 'X:{1} Y:{2} Z:{3} E:0 '.format(*match.groups())
     _plugin.grblMode = "MPos" if "MPos" in msg else "WPos" if "WPos" in msg else "N/A"
@@ -600,6 +602,7 @@ def process_grbl_status_msg(_plugin, msg):
     _plugin.grblY = float(match.groups(1)[2])
     _plugin.grblZ = float(match.groups(1)[3])
 
+    #GOTTA DO STUFF HERE
     if match.groups(1)[5]:
         _plugin.grblA = float(match.groups(1)[4])
         _plugin.grblB = float(match.groups(1)[5])

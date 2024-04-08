@@ -285,7 +285,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             fluidYaml = None,
             fluidSettings = {},
             hasA = False,
-            hasB = False
+            hasB = False,
+            hasC = False,
         )
 
 
@@ -1416,11 +1417,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         xl, yl, zl = _bgs.get_axes_limits(self)
         hasA = self._settings.get(["hasA"])
         hasB = self._settings.get(["hasB"])
+        hasC = self._settings.get(["hasC"])
         extra_axes = ""
         if hasA:
             extra_axes = extra_axes+"A0 "
         if hasB:
-            extra_axes = extra_axes+"B0"
+            extra_axes = extra_axes+"B0 "
+        if hasC:
+            extra_axes = extra_axes+"C0"
 
         if command == "babydown":
             #positive value here if doing G92 to reset coordinates
@@ -1685,10 +1689,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 self._printer.commands("G91 G10 P{} L20 A0".format(program))
             elif axis == "B" and hasB:
                 self._printer.commands("G91 G10 P{} L20 B0".format(program))
-            elif axis == "A" and hasA:
-                self._printer.commands("G91 G10 P{} L20 A0".format(program))
-            elif axis == "B" and hasB:
-                self._printer.commands("G91 G10 P{} L20 B0".format(program))
+            elif axis == "C" and hasC:
+                self._printer.commands("G91 G10 P{} L20 C0".format(program))
             else:
                 self._printer.commands("G91 G10 P{0} L20 X0 Y0 Z0 {1}".format(program, extra_axes))
 

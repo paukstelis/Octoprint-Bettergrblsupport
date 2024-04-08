@@ -52,6 +52,7 @@ $(function() {
         self.zPos = ko.observable("N/A");
         self.aPos = ko.observable("N/A");
         self.bPos = ko.observable("N/A");
+        self.cPos = ko.observable("N/A");
         self.power = ko.observable("N/A");
         self.speed = ko.observable("N/A");
         self.pins = ko.observable("N/A")
@@ -415,7 +416,8 @@ $(function() {
 
             if (self.settings.settings.plugins.bettergrblsupport.hasA() == true) { self.origin_axes.push("A"); }
             if (self.settings.settings.plugins.bettergrblsupport.hasB() == true) { self.origin_axes.push("B"); }
-    
+            if (self.settings.settings.plugins.bettergrblsupport.hasC() == true) { self.origin_axes.push("C"); }
+            
             self.notifications.requestData = self.overrideRequestData;
             self.notifications.clear = self.overrideClear;
             self.notifications.onDataUpdaterPluginMessage = self.overrideOnDataUpdaterPluginMessage;
@@ -501,6 +503,7 @@ $(function() {
                 if (data.z != undefined) self.zPos(Number.parseFloat(data.z).toFixed(2));
                 if (data.a != undefined) self.aPos(Number.parseFloat(data.a).toFixed(2));
                 if (data.b != undefined) self.bPos(Number.parseFloat(data.b).toFixed(2));
+                if (data.c != undefined) self.cPos(Number.parseFloat(data.c).toFixed(2));
 
                 if (data.speed != undefined) self.speed(Number.parseFloat(data.speed).toFixed(2));
                 if (data.pins != undefined) self.pins(data.pins);

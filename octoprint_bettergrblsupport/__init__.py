@@ -112,6 +112,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.minFeed = float(0)
         self.DIAM = float(0)
         self.maxarc = float(0)
+        self.arcadd = float(1)
         self.minz = float(0)
         self.tooldistance = 135.0
         self.timeRef = 0
@@ -705,18 +706,30 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
         if match_z:
             self.queue_Z = float(match_z.groups(1)[0])
-        
+        if match_x:
+            self.queue_X = float(match_x.groups(1)[0])
+        if match_a:
+            self.queue_A = float(match_a.groups(1)[0])
+       
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
-            match_cmd = re.search(r"^G([\d]+).*", cmd)
-            newcmd = "G{0} ".format(match_cmd.groups(1)[0])
+            match_cmd = re.search(r"^(G[\d]+)\s?(G[\d]+)?\s?(G[\d]+)?.*", cmd)
+            gcommands = []
+            moves = ["G1", "G01", "G0", "G00"]
+            newcmd = ''
+            #this is hacky. why does it put a 1 into the list if not present?
+            if match_cmd.groups(1)[0] != 1: gcommands.append(match_cmd.groups(1)[0])
+            if match_cmd.groups(1)[1] != 1: gcommands.append(match_cmd.groups(1)[1])
+            if match_cmd.groups(1)[2] != 1: gcommands.append(match_cmd.groups(1)[2])
+
+            if not any(c in gcommands for c in moves):
+                return cmd
             
-            if match_x:
-                self.queue_X = float(match_x.groups(1)[0])
-            if match_a:
-                self.queue_A = float(match_a.groups(1)[0])
+            for c in gcommands:
+                newcmd = newcmd + "{0} ".format(c)
 
             if self.do_mod_z:
-                zmod = self.adjust_Z(self.queue_Z, self.queue_A)
+                zmod = self.adjust_Z(self.queue_A, self.queue_Z)
+                #self._logger.info("Z modified by {0}".format(zmod))
             else:
                 zmod = 0.0
 
@@ -747,7 +760,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
                     newcmd = newcmd + "S{0} ".format(self.queue_S)
-                self._logger.info(newcmd)
+                #self._logger.info(newcmd)
                 cmd = newcmd
 
         if self.babystep:
@@ -766,7 +779,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         #self.queue_A = float(match_a.groups(1)[0])
         calc_Arad = math.radians(float(aval))
         calc_Y = calc_Arad*(self.DIAM/2)
-        new_A = calc_Y/(self.DIAM/2 + zval)
+        new_A = calc_Y/((self.DIAM/2) + zval)
         return math.degrees(new_A)
 
     def adjust_Z(self, aval, zval):
@@ -777,7 +790,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             return 0.0
         diff = math.sqrt(((self.maxarc/2)**2) - (aval**2))
         zmod = modDiam - (modDiam*math.cos(diff))
-        return zmod
+        return zmod*self.arcadd
 
     def rot_trans_adjust(self, bvalues):
         #get absolute positions first
@@ -913,15 +926,27 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         
         if cmd.upper() == "STOPMODA":
             self.do_mod_a = False
-            self._logger.info('Mod A active')
+            self._logger.info('Mod A inactive')
             return (None, )
         
         if cmd.upper().startswith("MAXARC"):
-            minmax_match = re.search(r"MINMAX ([-]*\d*\.*\d*) ([-]*\d*\.*\d*)", cmd)
+            minmax_match = re.search(r"MAXARC ([\d.]+)", cmd)
             if minmax_match:
-                self.maxarc = math.radians(minmax_match.groups(1)[0])
-                self.minz = minmax_match.groups(1)[1]
-                self._logger.info(self.maxarc, self.minz)
+                self.maxarc = math.radians(float(minmax_match.groups(1)[0]))
+                self.do_mod_z = True
+                self._logger.info("MAXARC set to {0}".format(self.maxarc))
+                if self.maxarc == 0.0:
+                    self.do_mod_z = False 
+                    self._logger.info("MAXARC inactive")
+                
+            return (None, )
+        
+        if cmd.upper().startswith("ARCADD"):
+            arcadd_match = re.search(r"ARCADD ([\d.]+)", cmd)
+            if arcadd_match:
+                self._logger.info("ARCADD set to {0}".format(self.maxarc))
+                self.arcadd = float(arcadd_match.groups(1)[0])
+            return (None, )
 
         if cmd.upper().startswith("AFEED"):
             diam_match = re.search(r"AFEED ([\d.]+)", cmd)
@@ -937,6 +962,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             diam_match = re.search(r"DIAM ([\d.]+)", cmd)
             if diam_match:
                 self.DIAM = float(diam_match.groups(1)[0])
+                self._logger.info('Diameter set: {0}'.format(self.DIAM))
             return (None, )
         
         if cmd.upper() == "SCANDONE":

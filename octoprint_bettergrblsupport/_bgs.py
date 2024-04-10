@@ -603,19 +603,41 @@ def process_grbl_status_msg(_plugin, msg):
     _plugin.grblZ = float(match.groups(1)[3])
 
     #GOTTA DO STUFF HERE
-    if match.groups(1)[5]:
+    if match.groups(1)[6]:
         _plugin.grblA = float(match.groups(1)[4])
         _plugin.grblB = float(match.groups(1)[5])
-        response = response+'A:{0} B:{1} '.format(_plugin.grblA, _plugin.grblB)
-    if match.groups(1)[4] and not match.groups(1)[5] and hasB:
-        _plugin.grblB = float(match.groups(1)[4])
-        reponse = response+'B:{0}'.format(_plugin.grblB)
-    else:
-        _plugin.grblA = float(match.groups(1)[4])
-        response = response+'A:{0} '.format(_plugin.grblA)
+        _plugin.grblC = float(match.groups(1)[6])
+        response = response+'A:{0} B:{1} C:{2}'.format(_plugin.grblA, _plugin.grblB, _plugin.grblC)
+
+    #no C
+    if match.groups(1)[5] and not match.groups(1)[6]:
+        if hasA and hasB:
+            _plugin.grblA = float(match.groups(1)[4])
+            _plugin.grblB = float(match.groups(1)[5])
+            response = response+'A:{0} B:{1} '.format(_plugin.grblA, _plugin.grblB)
+        if hasA and hasC:
+            _plugin.grblA = float(match.groups(1)[4])
+            _plugin.grblC = float(match.groups(1)[5])
+            response = response+'A:{0} B:{1} '.format(_plugin.grblA, _plugin.grblC)
+        if hasB and hasC:
+            _plugin.grblB = float(match.groups(1)[4])
+            _plugin.grblC = float(match.groups(1)[5])
+            response = response+'B:{0} C:{1} '.format(_plugin.grblB, _plugin.grblC)
+
+    if match.groups(1)[4] and not match.groups(1)[5]:
+        if hasA:
+            _plugin.grblA = float(match.groups(1)[4])
+            reponse = response+'A:{0}'.format(_plugin.grblA)
+        if hasB:
+            _plugin.grblB = float(match.groups(1)[4])
+            reponse = response+'B:{0}'.format(_plugin.grblB)
+        if hasC:
+            _plugin.grblC = float(match.groups(1)[4])
+            reponse = response+'C:{0}'.format(_plugin.grblC)
+
     response = response+msg
 
-    match = re.search(r'.*\|Pn:([XYZABPDHRS]+)', msg)
+    match = re.search(r'.*\|Pn:([XYZABCPDHRS]+)', msg)
     if not match is None:
         _plugin.grblActivePins = match.groups(1)[0]
     else:
@@ -634,6 +656,7 @@ def process_grbl_status_msg(_plugin, msg):
                                                                     z=_plugin.grblZ,
                                                                     a=_plugin.grblA,
                                                                     b=_plugin.grblB,
+                                                                    c=plugin.grblC,
                                                                     pins=_plugin.grblActivePins,
                                                                     speed=_plugin.grblSpeed,
                                                                     power=_plugin.grblPowerLevel,

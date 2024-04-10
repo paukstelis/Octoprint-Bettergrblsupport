@@ -94,6 +94,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.grblZ = float(0)
         self.grblA = float(0)
         self.grblB = float(0)
+        self.grblC = float(0)
         self.offsets = []
         self.queue_Z = float(0)
         self.queue_X = float(0)
@@ -1159,6 +1160,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.grblB = float(match.groups(1)[0]) if self.positioning == 0 else self.grblB + float(match.groups(1)[0])
             found = True
 
+        match = re.search(r".*[Cc]\ *(-?[\d.]+).*", cmd)
+        if not match is None:
+            self.grblC = float(match.groups(1)[0]) if self.positioning == 0 else self.grblC + float(match.groups(1)[0])
+            found = True
+            
         # match = re.search(r"^[GM]([0][01234]|[01234])(\D.*[Ff]|[Ff])\ *(-?[\d.]+).*", command)
         match = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
         if not match is None:
@@ -1216,6 +1222,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                                                                                 z=self.grblZ,
                                                                                 a=self.grblA,
                                                                                 b=self.grblB,
+                                                                                c=self.grblC,
                                                                                 speed=self.grblSpeed,
                                                                                 power=self.grblPowerLevel,
                                                                                 positioning=self.positioning,

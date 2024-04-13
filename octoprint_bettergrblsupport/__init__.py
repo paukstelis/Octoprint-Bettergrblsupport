@@ -97,6 +97,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.offsets = []
         self.queue_Z = float(0)
         self.queue_X = float(0)
+        self.queue_A = float(0)
         self.grblActivePins = ""
         self.grblSpeed = float(0)
         self.grblPowerLevel = float(0)
@@ -738,13 +739,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 bangle = math.radians(self.bangle)
                 mod_x = self.queue_X*math.cos(bangle) + (self.queue_Z - zmod)*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
-                newcmd = newcmd + "X{0:.4f} Z{1:.4f} ".format(mod_x, mod_z)
-                newA = self.get_new_A(mod_z, self.queue_A)
-
+                
                 if self.do_mod_a:
-                    newcmd = newcmd + "A{0:.4f} ".format((newA))
+                    newA, deltaZ = self.get_new_A(mod_z, self.queue_A)
+                    mod_z = mod_z+deltaZ
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, newA)
                 else:
-                    newcmd = newcmd + "A{0:.4f} ".format((self.queue_A)) 
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A) 
                
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])
@@ -776,11 +777,19 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         return cmd
 
     def get_new_A(self, zval, aval):
-        #self.queue_A = float(match_a.groups(1)[0])
+        radius = self.DIAM/2
         calc_Arad = math.radians(float(aval))
-        calc_Y = calc_Arad*(self.DIAM/2)
-        new_A = calc_Y/((self.DIAM/2) + zval)
-        return math.degrees(new_A)
+        calc_Y = calc_Arad*(radius)
+        distance = math.sqrt(calc_Y**2 + (radius + zval)**2)
+        to_origin = math.sqrt(calc_Y**2 + zval**2)
+        cos_angle = (radius**2 + distance**2 - to_origin**2) / (2 * radius * distance)
+        new_A = math.acos(cos_angle)
+        new_A = sorted([-1, new_A, 1])[1]
+        if calc_Y < 0:
+            new_A = new_A*-1
+        local_distance = distance - radius - zval
+        #self._logger.info("Calc. Y: {0}, Distance: {1}, To Origin: {2}, Degrees: {3}".format(calc_Y, distance, to_origin, math.degrees(new_A)))
+        return math.degrees(new_A), local_distance
 
     def adjust_Z(self, aval, zval):
         modDiam = (self.DIAM/2) + zval
@@ -928,12 +937,17 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.do_mod_a = False
             self._logger.info('Mod A inactive')
             return (None, )
-        
+        if cmd.upper() == "DOARCMOD":
+            self.do_mod_z = True
+            return (None, )
+        if cmd.upper() == "STOPARCMOD":
+            self.do_mod_z = False
+            return (None, )
         if cmd.upper().startswith("MAXARC"):
             minmax_match = re.search(r"MAXARC ([\d.]+)", cmd)
             if minmax_match:
                 self.maxarc = math.radians(float(minmax_match.groups(1)[0]))
-                self.do_mod_z = True
+                #self.do_mod_z = True
                 self._logger.info("MAXARC set to {0}".format(self.maxarc))
                 if self.maxarc == 0.0:
                     self.do_mod_z = False 

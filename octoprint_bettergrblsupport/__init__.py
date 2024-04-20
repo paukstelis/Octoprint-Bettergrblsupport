@@ -739,10 +739,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 bangle = math.radians(self.bangle)
                 mod_x = self.queue_X*math.cos(bangle) + (self.queue_Z - zmod)*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
-                
+                mod_z_init = -self.queue_X*math.sin(bangle) + (0 - zmod)*math.cos(bangle)
                 if self.do_mod_a:
-                    newA, deltaZ = self.get_new_A(mod_z, self.queue_A)
+                    #mod_z_init used to prevent over rotation at deeper cuts at the expense of a tapered pocket.
+                    newA, deltaZ = self.get_new_A(mod_z_init, self.queue_A)
                     mod_z = mod_z+deltaZ
+                    #self._logger.info("mod_x: {0}, mod_z: {1}, mod_z_init: {2}".format(mod_x, mod_z, mod_z_init))
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, newA)
                 else:
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A) 
@@ -764,16 +766,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 #self._logger.info(newcmd)
                 cmd = newcmd
 
-        if self.babystep:
-            if mod_z:
-                newZ = mod_z + self.babystep
-            else:                
-                newZ = self.queue_Z + self.babystep
-            self.babystep = 0
-            self._logger.info("Babystepping Z value. Starting: {0}, Finish: {1}".format(self.queue_Z, newZ))
-            cmd.extend("G92 Z{:.3f}".format(newZ))
-            self._logger.info(cmd)
-        
         return cmd
 
     def get_new_A(self, zval, aval):
@@ -788,7 +780,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if calc_Y < 0:
             new_A = new_A*-1
         local_distance = distance - radius - zval
-        #self._logger.info("Calc. Y: {0}, Distance: {1}, To Origin: {2}, Degrees: {3}".format(calc_Y, distance, to_origin, math.degrees(new_A)))
+        #self._logger.info("Calc. Y: {0}, Distance: {1}, To Origin: {2}, Degrees: {3}, Zval: {4}".format(calc_Y, distance, to_origin, math.degrees(new_A), zval))
         return math.degrees(new_A), local_distance
 
     def adjust_Z(self, aval, zval):

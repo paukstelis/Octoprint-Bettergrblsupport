@@ -219,7 +219,7 @@ $(function() {
           self.cancelJog();
 
           if (self.operator() == "J") {
-            jogInterval = setInterval(function() { self.moveHead(direction, 10) }, 200);
+            jogInterval = setInterval(function() { self.moveHead(direction, 10) }, 10);
           } else {
             self.moveHead(direction);
           }
@@ -1144,6 +1144,22 @@ $(function() {
                     button = $("#control-south");
                     simulateTouch = true;
                     break;
+                case 188: //, or <
+                    button = $("#control-a-right");
+                    simulateTouch = true;
+                    break;
+                case 190: //. or >
+                    button = $("#control-a-left");
+                    simulateTouch = true;
+                    break;
+                case 219: // [
+                    button = $("#control-b-left");
+                    simulateTouch = true;
+                    break;
+                case 221: // [
+                    button = $("#control-b-right");
+                    simulateTouch = true;
+                    break;
                 case 49: // number 1
                 case 97: // numpad 1
                     // toggle operator
@@ -1371,6 +1387,27 @@ $(function() {
           var controller = controllers[j];
           var x = 0;
           var y = 0;
+
+                  //Rotate A
+                  if (controller.buttons[4]["pressed"] == true) {
+                    sendkeydown("Comma",188,188);
+                    controller.buttons[4]["pressed"] = false;
+                  }
+
+                  if (controller.buttons[5]["pressed"] == true) {
+                    sendkeydown("Period",190,190);
+                    controller.buttons[5]["pressed"] = false;
+                  }
+
+                  if (controller.buttons[6]["pressed"] == true) {
+                    sendkeydown("OB",219,219);
+                    controller.buttons[6]["pressed"] = false;
+                  }
+
+                  if (controller.buttons[7]["pressed"] == true) {
+                    sendkeydown("CB",221,221);
+                    controller.buttons[7]["pressed"] = false;
+                  }
                   //swapping Y and Z
                   if (controller.buttons[12]["pressed"] == true) {
                     //Z DOWN

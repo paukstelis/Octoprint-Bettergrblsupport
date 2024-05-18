@@ -775,8 +775,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         distance = math.sqrt(calc_Y**2 + (radius + zval)**2)
         to_origin = math.sqrt(calc_Y**2 + zval**2)
         cos_angle = (radius**2 + distance**2 - to_origin**2) / (2 * radius * distance)
+        cos_angle = sorted([-1, cos_angle, 1])[1]
         new_A = math.acos(cos_angle)
-        new_A = sorted([-1, new_A, 1])[1]
+       
         if calc_Y < 0:
             new_A = new_A*-1
         local_distance = distance - radius - zval
@@ -913,7 +914,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.do_bangle = True
             self.bangle = self.grblB
             self._logger.info('do_bangle is: {0} and bangle is: {1}'.format(self.do_bangle, self.bangle))
-            return (None, )
+            #set B to current position to make sure motor is engaged
+            newcmd = "G91 G1 B{0} F200".format(self.grblB)
+            return (newcmd, )
         
         if cmd.upper() == "STOPBANGLE":
             self.do_bangle = False

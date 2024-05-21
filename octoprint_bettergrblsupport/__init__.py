@@ -915,7 +915,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.bangle = self.grblB
             self._logger.info('do_bangle is: {0} and bangle is: {1}'.format(self.do_bangle, self.bangle))
             #set B to current position to make sure motor is engaged
-            newcmd = "G91 G1 B{0} F200".format(self.grblB)
+            newcmd = "G90 G1 B{0} F200".format(self.grblB)
             return (newcmd, )
         
         if cmd.upper() == "STOPBANGLE":

@@ -956,6 +956,14 @@ def do_xscan_zprobe(_plugin, sessionId):
     zTravel = zTravel * -1 * _plugin.invertZ
 
     #Get our settings and spew out some gcode....this will be a long message
+    zprobe_axis = _plugin._settings.get(["zprobe_axis"])
+    #X means probe event will move in the X direction the X direction
+    #Z means probe event will move in the Z direction
+    #raise an error if axis is not X or z?
+    if zprobe_axis == "X":
+        inc_axis = "Z"
+    else:
+        inc_axis = "X"
     zprobe_xdir = int(_plugin._settings.get(["zprobe_xdir"]))
     zprobe_xlen = int(_plugin._settings.get(["zprobe_xlen"]))
     zprobe_xhop = int(_plugin._settings.get(["zprobe_xzhop"]))
@@ -964,11 +972,11 @@ def do_xscan_zprobe(_plugin, sessionId):
     xsteps = 1
     #First probing at X = 0
     gcode = []
-    gcode.append("G91 G21 G38.2 Z{} F100".format(zTravel))
+    gcode.append("G91 G21 G38.2 {0}{1} F100".format(zprobe_axis, zTravel))
     while xsteps < total_xsteps:
-        gcode.append("G91 G21 G1 Z{} F500".format(zprobe_xhop))
-        gcode.append("G91 G21 G1 X{} F500".format(zprobe_xinc*zprobe_xdir))
-        gcode.append("G91 G21 G38.2 Z{} F100".format(zTravel))
+        gcode.append("G91 G21 G1 {0}{1} F500".format(zprobe_axis,zprobe_xhop))
+        gcode.append("G91 G21 G1 {0}{1} F500".format(inc_axis, zprobe_xinc*zprobe_xdir))
+        gcode.append("G91 G21 G38.2 {0}{1} F100".format(zprobe_axis, zTravel))
         xsteps+=1
     gcode.append("SCANDONE")
     _plugin._printer.commands(gcode)

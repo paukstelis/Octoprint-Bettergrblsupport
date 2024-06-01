@@ -58,12 +58,12 @@
 
 			<br>
 
-			<label class="control-label">Z-Probe Method</label>
+			<label class="control-label">Probe Method</label>
 	    <div class="controls">
 	        <select data-bind="value: settings.plugins.bettergrblsupport.zprobeMethod">
 	            <option value="SIMPLE">Single point Z-Probe</option>
 	            <option value="MULTI">Multi point Z-Probe</option>
-				<option value="XSCAN">X axis probing scan</option>
+				<option value="XSCAN">Probing scan</option>
 	        </select>
 	    </div>
 
@@ -124,8 +124,14 @@
 			</div>
 
 			<br>
-
-			<label class="control-label">X Scan Length</label>
+			<label class="control-label">Probe Axis (Z, X)</label>
+			<div class="controls">
+	        <select data-bind="value: settings.plugins.bettergrblsupport.zprobe_axis">
+							<option value="Z">Z</option>
+							<option value="X">X</option>
+	        </select>
+	    	</div>
+			<label class="control-label">Scan Length</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xlen, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>
@@ -133,15 +139,15 @@
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_diam, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>
-			<label class="control-label">X Scan Increments</label>
+			<label class="control-label">Scan Increments</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xinc, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>
-			<label class="control-label">X Scan Direction (1 or -1)</label>
+			<label class="control-label">Scan Direction (1 or -1)</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="value: settings.plugins.bettergrblsupport.zprobe_xdir, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>
-			<label class="control-label">X Scan Z pulloff</label>
+			<label class="control-label">Scan Z pulloff</label>
 			<div class="controls">
 					<input type="text" class="input-mini" data-bind="numeric, value: settings.plugins.bettergrblsupport.zprobe_xzhop, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data) } }">mm
 			</div>

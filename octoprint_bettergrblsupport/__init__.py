@@ -108,6 +108,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.do_bangle = False
         self.do_mod_a = False
         self.do_mod_z = False
+        self.do_polarcomp = False
+        self.heightmap = []
         self.bangle = float(0)
         self.Afeed = False
         self.minFeed = float(0)
@@ -266,6 +268,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             useDevChannel = False,
             zprobeMethod = "SIMPLE",
             zprobeCalc = "MIN",
+            zprobe_axis = "X",
             zprobe_xdir = -1,
             zprobe_xlen = 90,
             zprobe_xzhop = 10,
@@ -740,12 +743,20 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_x = self.queue_X*math.cos(bangle) + (self.queue_Z - zmod)*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
                 mod_z_init = -self.queue_X*math.sin(bangle) + (0 - zmod)*math.cos(bangle)
+                #mod_a will be used anytime there is a cartesian to rotation transformation
                 if self.do_mod_a:
                     #mod_z_init used to prevent over rotation at deeper cuts at the expense of a tapered pocket.
                     newA, deltaZ = self.get_new_A(mod_z_init, self.queue_A)
                     mod_z = mod_z+deltaZ
                     #self._logger.info("mod_x: {0}, mod_z: {1}, mod_z_init: {2}".format(mod_x, mod_z, mod_z_init))
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, newA)
+                #polarcomp is used to compensate for 'X' distance based on Z position when using polar coordinates
+                if self.do_polarcomp:
+                    mod_x_p = self.linear_interpolation(mod_x, self.heightmap, 'x')
+                    #add mod_x_p to mod_x
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x_p+mod_x, mod_z, self.queue_A)
+                    self._logger.info("Polar comp")
+
                 else:
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A) 
                
@@ -758,7 +769,11 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     if self.Afeed:
                         if self.queue_F < self.minFeed:
                             self.queue_F = self.minFeed
-                    newcmd = newcmd + "F{0} ".format(self.queue_F)
+                    #Need to adjust for self.feedRate!
+                    if not match_z and self.feedRate != 0:
+                        newcmd = newcmd + "F{0} ".format(self.queue_F*self.feedRate)
+                    else:
+                        newcmd = newcmd = "F{0} ".format(self.queue_F)
 
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
@@ -767,6 +782,43 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 cmd = newcmd
 
         return cmd
+
+    def linear_interpolation(self, value, points, axis='x'):
+
+        if axis not in ['X', 'Z']:
+            raise ValueError("Axis must be either 'x' or 'z'.")
+
+        # Ensure the points are sorted by the interpolation axis
+        if axis == 'x':
+            points = sorted(points, key=lambda point: point[0])
+        else:
+            points = sorted(points, key=lambda point: point[1])
+
+        # Check the bounds
+        if axis == 'X':
+            if value < points[0][0] or value > points[-1][0]:
+                raise ValueError("Value is out of bounds of the provided points for the X axis.")
+        else:
+            if value < points[0][1] or value > points[-1][1]:
+                raise ValueError("Value is out of bounds of the provided points for the Z axis.")
+
+        # Iterate through the list of points to find the correct interval
+        for i in range(len(points) - 1):
+            x1, z1 = points[i]
+            x2, z2 = points[i + 1]
+
+            if axis == 'X' and x1 <= value <= x2:
+                # Perform the linear interpolation for the X axis
+                z = z1 + (z2 - z1) * (value - x1) / (x2 - x1)
+                return z
+            elif axis == 'Z' and z1 <= value <= z2:
+                # Perform the linear interpolation for the Z axis
+                x = x1 + (x2 - x1) * (value - z1) / (z2 - z1)
+                return x
+
+        # If no interval was found, which theoretically should not happen due to bounds check
+        raise ValueError("Failed to interpolate the value.")
+
 
     def get_new_A(self, zval, aval):
         radius = self.DIAM/2
@@ -796,6 +848,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
     def rot_trans_adjust(self, bvalues):
         #get absolute positions first
+        #THIS CURRENTLY DOESN'T WORK AS EXPECTED
         bangle = self.grblB + bvalues
         currentx = self.grblX
         currentz = self.grblZ
@@ -923,6 +976,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info('B angle matrix transformation off')
             return (None, )
         
+        if cmd.upper() == "DOPOLAR":
+            self.do_polarcomp = True
+            self._logger.info('do_polarcomp is: {0}'.format(self.do_polarcomp))
+
+        if cmd.upper() == "STOPPOLAR":
+            self.do_polarcomp = False
+                
         if cmd.upper() == "DOMODA":
             self.do_mod_a = True
             self._logger.info('Mod A active')
@@ -976,118 +1036,12 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         
         if cmd.upper() == "SCANDONE":
             self.xscan = False
-            #do Blender call here!
+            if self._settings.get(["zprobe_axis"]) == "Z":
+                #do Blender call here!
             os.system("blender -b -P {0}/{1} -- {2} {3} {2}".format(self.datafolder, "blender_probe_stl.py",\
                                                                     os.path.join(self.datafolder, self.datafile),\
                                                                     self.zProbeDiam))                                                                    
             return (None, )
-
-        # Grbl 1.1 Realtime Commands (requires Octoprint 1.8.0+)
-        # see https://github.com/OctoPrint/OctoPrint/pull/4390
-
-        # safety door
-        if cmd.upper() == "SAFETYDOOR":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Triggering safety door ")
-                cmd = "? {} ?".format("\x84")
-            else:
-                return (None, )
-
-        # cancel jog
-        if cmd.upper() == "CANCELJOG":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Cancelling jog")
-                cmd = "? {} ?".format("\x85")
-            else:
-                return (None, )
-
-        # normal feed
-        if cmd.upper() == "FEEDNORMAL":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting normal feed rate")
-                cmd = "? {} ?".format("\x90")
-            else:
-                return (None, )
-
-        # feed +10%
-        if cmd.upper() == "FEEDPLUS10":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting feed rate +10%")
-                cmd = "? {} ?".format("\x91")
-            else:
-                return (None, )
-
-        # feed -10%
-        if cmd.upper() == "FEEDMINUS10":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting feed rate -10%")
-                cmd = "? {} ?".format("\x92")
-            else:
-                return (None, )
-
-        # feed +1%
-        if cmd.upper() == "FEEDPLUS1":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting feed rate +1%")
-                cmd = "? {} ?".format("\x93")
-            else:
-                return (None, )
-
-        # feed -1%
-        if cmd.upper() == "FEEDMINUS1":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting feed rate -1%")
-                cmd = "? {} ?".format("\x94")
-            else:
-                return (None, )
-
-        # normal spindle
-        if cmd.upper() == "SPINDLENORMAL":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting normal spindle speed")
-                cmd = "? {} ?".format("\x99")
-            else:
-                return (None, )
-
-        # spindle +10%
-        if cmd.upper() == "SPINDLEPLUS10":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting spindle speed +10%")
-                cmd = "? {} ?".format("\x9a") 
-            else:
-                return (None, )
-
-        # spindle -10%
-        if cmd.upper() == "SPINDLEMINUS10":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting spindle speed -10%")
-                cmd = "? {} ?".format("\x9B")
-            else:
-                return (None, )
-
-        # spindle +1%
-        if cmd.upper() == "SPINDLEPLUS1":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting spindle speed +1%")
-                cmd = "? {} ?".format("\x9C")
-            else:
-                return (None, )
-
-        # spindle -1%
-        if cmd.upper() == "SPINDLEMINUS1":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Setting spindle speed -1%")
-                cmd = "? {} ?".format("\x9D")
-            else:
-                return (None, )
-
-        # toggle spindle
-        if cmd.upper() == "TOGGLESPINDLE":
-            if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
-                self._logger.debug("Toggling spindle stop")
-                cmd = "? {} ?".format("\x9E")
-            else:
-                return (None, )
 
         # rewrite M115 firmware as $$ (hello)
         if self.suppressM115 and cmd.upper().startswith('M115'):
@@ -1320,7 +1274,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         # _bgs will pick this up if zProbe is active
         if "PRB:" in line.upper():
             if self._settings.get(["zprobeMethod"]) == "XSCAN" and self.xscan:
-                self._logger.debug("Got xscan")
+                #self._logger.debug("Got xscan")
                 #parse x and z and append them to a file
                 data = self.parse_probe(line)
                 self.write_datafile(data)
@@ -1629,12 +1583,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     _bgs.do_xy_probe(self, axis, sessionId)
                 elif axis == "Z":
                     method = self._settings.get(["zprobeMethod"])
+                    zprobe_axis = self._settings.get(["zprobe_axis"])
                     if method == "SIMPLE":
                         _bgs.do_simple_zprobe(self, sessionId)
                     if method =="MULTIPOINT":
                         _bgs.do_multipoint_zprobe(self, sessionId)
                     if method == "XSCAN":
-                        self.datafile = time.strftime("%Y%m%d-%H%M%S") + "_bowlscan.txt"
+                        if zprobe_axis == "X":
+                            self.datafile = "polarscan.txt"
+                        else:
+                            self.datafile = time.strftime("%Y%m%d-%H%M%S") + "_bowlscan.txt"
                         _bgs.do_xscan_zprobe(self, sessionId)
                         self.xscan = True
                         diam = self._settings.get(["zprobe_diam"])

@@ -98,6 +98,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.queue_Z = float(0)
         self.queue_X = float(0)
         self.queue_A = float(0)
+        self.queue_C = float(0)
         self.grblActivePins = ""
         self.grblSpeed = float(0)
         self.grblPowerLevel = float(0)
@@ -105,6 +106,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.coolant = "M9"
         self.grblCoordinateSystem = "G54"
         self.babystep = 0
+        self.millinglathe = False
         self.do_bangle = False
         self.do_mod_a = False
         self.do_mod_z = False
@@ -702,11 +704,13 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         match_z = re.search(r".*[Zz]\ *(-?[\d.]+).*", cmd)
         match_a = re.search(r".*[Aa]\ *(-?[\d.]+).*", cmd)
         match_b = re.search(r".*[Bb]\ *(-?[\d.]+).*", cmd)
+        match_c = re.search(r".*[Cc]\ *(-?[\d.]+).*", cmd)
         match_f = re.search(r".*[Ff]\ *(-?[\d.]+).*", cmd)
         match_s = re.search(r".*[Ss]\ *(-?[\d.]+).*", cmd)
         mod_x = 0
         mod_z = 0
         mod_a = 0
+        dorewrite = False
 
         if match_z:
             self.queue_Z = float(match_z.groups(1)[0])
@@ -714,12 +718,26 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             self.queue_X = float(match_x.groups(1)[0])
         if match_a:
             self.queue_A = float(match_a.groups(1)[0])
-       
+        if match_c:
+            self.queue_C = float(match_c.groups(1)[0])
+        #Axis swap if we are using MILLINGLATHE
+        #Won't impact sign of coordinate
+        #Do these here just in case do_bangle is true....
+        if self.millinglathe:
+            ml_x = self.queue_Z
+            ml_z = self.queue_X
+            ml_a = self.queue_C
+            self.queue_X = ml_x
+            self.queue_Z = ml_z
+            self.queue_A = ml_a
+        #begin rewrite
+        newcmd = ''
+
         if self.do_bangle and self._printer.is_printing() and cmd.startswith("G"):
             match_cmd = re.search(r"^(G[\d]+)\s?(G[\d]+)?\s?(G[\d]+)?.*", cmd)
             gcommands = []
             moves = ["G1", "G01", "G0", "G00"]
-            newcmd = ''
+            #newcmd = ''
             #this is hacky. why does it put a 1 into the list if not present?
             if match_cmd.groups(1)[0] != 1: gcommands.append(match_cmd.groups(1)[0])
             if match_cmd.groups(1)[1] != 1: gcommands.append(match_cmd.groups(1)[1])
@@ -759,28 +777,32 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
                 else:
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A) 
-               
-                if match_b:
-                    self.queue_B = float(match_b.groups(1)[0])
-                    newcmd = newcmd + "B{0:.4f} ".format(self.queue_B)
+                dorewrite = True
+
+        if self.millinglathe and self._printer.is_printing() and cmd.startswith("G") and not self.do_bangle:
+            match_cmd = re.search(r"^(G[\d]+)\s?(G[\d]+)?\s?(G[\d]+)?.*", cmd)
+            newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, newA)
+        if dorewrite:
+            if match_b:
+                self.queue_B = float(match_b.groups(1)[0])
+                newcmd = newcmd + "B{0:.4f} ".format(self.queue_B)
                 
-                if match_f:
-                    self.queue_F = float(match_f.groups(1)[0])
-                    if self.Afeed:
-                        if self.queue_F < self.minFeed:
-                            self.queue_F = self.minFeed
-                    #Need to adjust for self.feedRate!
-                    if not match_z and self.feedRate != 0:
-                        newcmd = newcmd + "F{0} ".format(self.queue_F*self.feedRate)
-                    else:
-                        newcmd = newcmd = "F{0} ".format(self.queue_F)
+            if match_f:
+                self.queue_F = float(match_f.groups(1)[0])
+                if self.Afeed:
+                    if self.queue_F < self.minFeed:
+                        self.queue_F = self.minFeed
+                #Need to adjust for self.feedRate!
+                if not match_z and self.feedRate != 0:
+                    newcmd = newcmd + "F{0} ".format(self.queue_F*self.feedRate)
+                else:
+                    newcmd = newcmd = "F{0} ".format(self.queue_F)
 
-                if match_s:
-                    self.queue_S = float(match_s.groups(1)[0])
-                    newcmd = newcmd + "S{0} ".format(self.queue_S)
-                #self._logger.info(newcmd)
-                cmd = newcmd
-
+            if match_s:
+                self.queue_S = float(match_s.groups(1)[0])
+                newcmd = newcmd + "S{0} ".format(self.queue_S)
+            #self._logger.info(newcmd)
+            cmd = newcmd
         return cmd
 
     def linear_interpolation(self, value, points, axis='x'):

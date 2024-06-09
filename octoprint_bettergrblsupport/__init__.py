@@ -110,6 +110,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.do_mod_z = False
         self.bangle = float(0)
         self.Afeed = False
+        self.S_limit = False
+        self.S_val = float(0)
         self.minFeed = float(0)
         self.DIAM = float(0)
         self.maxarc = float(0)
@@ -739,6 +741,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
                 mod_z_init = -self.queue_X*math.sin(bangle) + (0 - zmod)*math.cos(bangle)
                 #need to handle relative mode...damn you lightburn
+                #will have to redo this since there could very well be cases where do_mod_a and relative will have to go together
                 if self.do_mod_a:
                     #mod_z_init used to prevent over rotation at deeper cuts at the expense of a tapered pocket.
                     newA, deltaZ = self.get_new_A(mod_z_init, self.queue_A)
@@ -772,6 +775,9 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
                 if match_s:
                     self.queue_S = float(match_s.groups(1)[0])
+                    if self.S_limit:
+                        if self.queue_S > self.S_val:
+                            self.queue_S = self.S_val
                     newcmd = newcmd + "S{0} ".format(self.queue_S)
                 #self._logger.info(newcmd)
                 cmd = newcmd
@@ -982,6 +988,16 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             if self.minFeed < 1.0:
                 self.Afeed = False
             self._logger.info('Afeed is: {0} and diameter is: {1}'.format(self.Afeed, self.minFeed))
+            return (None, )
+        
+        if cmd.upper().startswith("SLIMIT"):
+            s_match = re.search(r"SLIMIT ([\d.]+)", cmd)
+            if s_match:
+                self.S_limit = True
+                self.S_val = float(diam_match.groups(1)[0])
+            if self.minFeed < 1.0:
+                self.S_limit = False
+            self._logger.info('Power limit is: {0}'.format(self.S_val))
             return (None, )
         
         if cmd.upper().startswith("DIAM"):

@@ -191,11 +191,11 @@
          <tr>
          <!-- ko if: settings.settings.plugins.bettergrblsupport.hasA -->
             <td style="padding: 0px 0px 10px 0px;">
-               <button id="control-a-right" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-right')}, mousedown: function() {jog('a-right')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
-               <i class="fa fa-rotate-right"></i>
-               </button>
-               <button id="control-a-left" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-left')}, mousedown: function() {jog('a-left')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <button id="control-a-left" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-right')}, mousedown: function() {jog('a-right')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                <i class="fa fa-rotate-left"></i>
+               </button>
+               <button id="control-a-right" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-left')}, mousedown: function() {jog('a-left')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <i class="fa fa-rotate-right"></i>
                </button>
             </td>
          <!-- /ko -->
@@ -240,9 +240,6 @@
         <br>
         <br>
       <!-- /ko -->
-      <button class="btn" style="width: 140px; border: 1px solid;" data-bind="enable: is_operational() && !is_printing() && (state() == 'Idle' || state() == 'Alarm'), click: function() { sendCommand('homing') }">Home Machine</button>
-      <br>
-      <br>
       <button class="btn" style="width: 140px; border: 1px solid;" data-bind="enable: is_operational(), click: function() { sendCommand('reset') }">Soft Reset</button>
       <br>
       <br>
@@ -254,26 +251,6 @@
    </span>
    <span style="display: inline-block; margin: 0px 10px 0px 10px; vertical-align: middle;">&nbsp;</span>
 </div>
-
-
-
-<div id="babystep_panel" style="text-align: center; overflow: hidden; margin: 0px 0px 0px 0px;" valign="top" align="center">
-  <span style="display: inline-block; margin: 0px 5px 0px 0px; vertical-align: middle;">&nbsp;</span>
-
-      <span id="babystep-minus" style="border: 1px solid; border-radius: 10px; display: inline-block; vertical-align: top; padding: 5px 10px 5px 10px; margin: 10px 0px 10px 0px;">
-         <button class="btn" data-bind="enable: is_operational() && is_printing(), click: function() { $root.sendCommand('babydown') }">Babystep-Z -0.1</button>
-      </span>
-  </span>
-
-  <span style="display: inline-block; margin: 0px 5px 0px 5px; vertical-align: middle;">&nbsp;</span>
-      <span id="babystep-plus" style="border: 1px solid; border-radius: 10px; display: inline-block; vertical-align: top; padding: 5px 10px 5px 10px; margin: 10px 0px 10px 0px;">
-         <button class="btn" data-bind="enable: is_operational() && is_printing(), click: function() { $root.sendCommand('babyup') }">Babystep-Z +0.1</button>
-      </span>
-  </span>
-</div>
-
-
-
 
 
 <div id="overrides_panel" style="text-align: center; overflow: hidden; margin: 0px 0px 0px 0px;" valign="top" align="center">

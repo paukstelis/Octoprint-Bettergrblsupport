@@ -31,8 +31,8 @@ $(function() {
         self.webcamHlsEnabled = ko.observable(false);
         self.webcamError = ko.observable(false);
 
-        self.origin_axes = ko.observableArray(["Z", "Y", "X", "XY", "ALL"]);
-        self.origin_axis = ko.observable("XY");
+        self.origin_axes = ko.observableArray(["Z", "Y", "X", "XZ","XZA","ALL"]);
+        self.origin_axis = ko.observable("XZ");
 
         self.coordinate_systems = ko.observableArray(["G54", "G55", "G56", "G57", "G58", "G59"]);
         self.coordinate_system = ko.observable("G54");
@@ -134,6 +134,22 @@ $(function() {
             } else if (previous == "#tab_plugin_bettergrblsupport") {
                 self._disableWebcam();
             }
+        };
+        
+        self.onBeforePrintStart = function(start_print_command) {
+
+            showConfirmationDialog({
+                title: gettext("Starting Job"),
+                message: gettext("<p><strong>You are about to start a job.</strong>"),
+                question: gettext("Are all axes zeroed and everything in position?"),
+                cancel: gettext("Cancel"),
+                proceed: gettext("Start"),
+                onproceed: function () {
+                    start_print_command();
+                },
+                nofade: true
+            });
+            return false;
         };
 
         self.onBrowserTabVisibilityChange = function(status) {
@@ -486,7 +502,6 @@ $(function() {
               self.state("N/A");
             }
         };
-
 
         self.onDataUpdaterPluginMessage = function(plugin, data) {
             if (plugin == 'bettergrblsupport' && data.type == 'grbl_state') {
@@ -1390,12 +1405,14 @@ $(function() {
 
                   //Rotate A
                   if (controller.buttons[4]["pressed"] == true) {
-                    sendkeydown("Comma",188,188);
+                    //sendkeydown("Comma",188,188);
+                    sendkeydown("Period",190,190);
                     controller.buttons[4]["pressed"] = false;
                   }
 
                   if (controller.buttons[5]["pressed"] == true) {
-                    sendkeydown("Period",190,190);
+                    //sendkeydown("Period",190,190);
+                    sendkeydown("Comma",188,188);
                     controller.buttons[5]["pressed"] = false;
                   }
 
@@ -1421,12 +1438,14 @@ $(function() {
                   }
                   if (controller.buttons[14]["pressed"] == true) {
                     //Z DOWN
-                    sendkeydown("Right",39,39);
+                    //sendkeydown("Right",39,39);
+                    sendkeydown("Left",37,37);
                     controller.buttons[14]["pressed"] = false;
                   }
                   if (controller.buttons[15]["pressed"] == true) {
                     //Z DOWN
-                    sendkeydown("Left",37,37);
+                    //sendkeydown("Left",37,37);
+                    sendkeydown("Right",39,39);
                     controller.buttons[15]["pressed"] = false;
                   }
                   //distances
@@ -1496,8 +1515,8 @@ $(function() {
             fastAxis = Math.abs(y);
           }
   
-          OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Z" + y + " F" + scaleValue(fastAxis, [1,20], [100,2500]));
-          console.log("x=" + x + " y=" + y);
+          OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Z" + y*-1 + " F" + scaleValue(fastAxis, [1,20], [100,1000]));
+          console.log("x=" + x + " z=" + y);
         }
       }
 

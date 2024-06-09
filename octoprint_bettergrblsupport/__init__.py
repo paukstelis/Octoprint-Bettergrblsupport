@@ -115,6 +115,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         self.maxarc = float(0)
         self.arcadd = float(1)
         self.minz = float(0)
+        self.relative = False
         self.tooldistance = 135.0
         self.timeRef = 0
 
@@ -640,13 +641,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     "custom_bindings": True
             },
             {
-                    "type": "sidebar",
-                    "name": "Material Framing",
-                    "icon": "th",
-                    "template": "bgsframing_sidebar.jinja2",
-                    "custom_bindings": True
-            },
-            {
                     "type": "wizard",
                     "name": "Better Grbl Support",
                     "template": "bettergrblsupport_wizard.jinja2",
@@ -736,19 +730,35 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
             if match_x or match_z or match_a:
                 self.bangle = self.grblB
-                bangle = math.radians(self.bangle)
+                #invert bangle with X-axis inversion
+                bangle = math.radians(self.bangle)*-1
+                #bangle = math.radians(self.bangle)
+               
+                
                 mod_x = self.queue_X*math.cos(bangle) + (self.queue_Z - zmod)*math.sin(bangle)
                 mod_z = -self.queue_X*math.sin(bangle) + (self.queue_Z - zmod)*math.cos(bangle)
                 mod_z_init = -self.queue_X*math.sin(bangle) + (0 - zmod)*math.cos(bangle)
+                #need to handle relative mode...damn you lightburn
                 if self.do_mod_a:
                     #mod_z_init used to prevent over rotation at deeper cuts at the expense of a tapered pocket.
                     newA, deltaZ = self.get_new_A(mod_z_init, self.queue_A)
                     mod_z = mod_z+deltaZ
                     #self._logger.info("mod_x: {0}, mod_z: {1}, mod_z_init: {2}".format(mod_x, mod_z, mod_z_init))
                     newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, newA)
-                else:
-                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A) 
-               
+                #have both X and A
+                elif self.relative and match_x and match_a:
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A)
+                #have X, but not A
+                elif self.relative and not match_a:
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f}".format(mod_x, mod_z)
+                #absolute mode
+                elif not self.relative:
+                    newcmd = newcmd + "X{0:.4f} Z{1:.4f} A{2:.4f} ".format(mod_x, mod_z, self.queue_A)
+
+                if self.relative and match_a and not match_x:
+                    #just return A, might need to rethink this.
+                    newcmd = "{0} A{1:.4f} ".format(c, self.queue_A)
+
                 if match_b:
                     self.queue_B = float(match_b.groups(1)[0])
                     newcmd = newcmd + "B{0:.4f} ".format(self.queue_B)
@@ -800,7 +810,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         currentx = self.grblX
         currentz = self.grblZ
 
-        bangle = math.radians(bangle)
+        bangle = math.radians(bangle)*-1
         #mod_x = currentx*math.cos(bangle) + (currentz + self.tooldistance)*math.sin(bangle)
         mod_x = self.tooldistance*math.sin(math.radians(bvalues))
         mod_z = self.tooldistance*math.cos(bangle) - self.tooldistance
@@ -909,7 +919,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 subprocess.call(self.m9Command, shell=True)
 
                 return (None,)
-        
+        if cmd.upper() == "G91":
+            self.relative = True
+            self._logger.info("Relative mode")
+            return (cmd, )
+        if cmd.upper() == "G90":
+            self._logger.info("Absolute mode")
+            self.relative = False
+            return (cmd, )
         if cmd.upper() == "DOBANGLE":
             self.do_bangle = True
             self.bangle = self.grblB

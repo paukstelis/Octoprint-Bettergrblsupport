@@ -994,8 +994,8 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             s_match = re.search(r"SLIMIT ([\d.]+)", cmd)
             if s_match:
                 self.S_limit = True
-                self.S_val = float(diam_match.groups(1)[0])
-            if self.minFeed < 1.0:
+                self.S_val = float(s_match.groups(1)[0])
+            if self.S_val < 1.0:
                 self.S_limit = False
             self._logger.info('Power limit is: {0}'.format(self.S_val))
             return (None, )
@@ -1490,16 +1490,6 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         if hasB:
             extra_axes = extra_axes+"B0"
 
-        if command == "babydown":
-            #positive value here if doing G92 to reset coordinates
-            self._logger.info("Babydown")
-            self.babystep = 0.1
-        
-        if command == "babyup":
-            #negative value here if doing G92 to reset coordintes
-            self._logger.info("Babyup")
-            self.babystep = -0.1
-
         if command == "cancelProbe":
             _bgs.grbl_alarm_or_error_occurred(self)
             return
@@ -1747,8 +1737,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 self._printer.commands("G91 G10 P{} L20 Y0".format(program))
             elif axis == "Z":
                 self._printer.commands("G91 G10 P{} L20 Z0".format(program))
-            elif axis == "XY":
-                self._printer.commands("G91 G10 P{} L20 X0 Y0".format(program))
+            elif axis == "XZ":
+                self._printer.commands("G91 G10 P{} L20 X0 Z0".format(program))
+            elif axis == "XZA":
+                self._printer.commands("G91 G10 P{} L20 X0 Z0 A0".format(program))
             elif axis == "A" and hasA:
                 self._printer.commands("G91 G10 P{} L20 A0".format(program))
             elif axis == "B" and hasB:

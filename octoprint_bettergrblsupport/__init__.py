@@ -1017,7 +1017,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
 
         # Grbl 1.1 Realtime Commands (requires Octoprint 1.8.0+)
         # see https://github.com/OctoPrint/OctoPrint/pull/4390
-
+        '''
         # safety door
         if cmd.upper() == "SAFETYDOOR":
             if _bgs.is_grbl_one_dot_one(self) and _bgs.is_latin_encoding_available(self):
@@ -1121,7 +1121,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                 cmd = "? {} ?".format("\x9E")
             else:
                 return (None, )
-
+        '''
         # rewrite M115 firmware as $$ (hello)
         if self.suppressM115 and cmd.upper().startswith('M115'):
             self._logger.debug('Rewriting M115 as %s' % self.helloCommand)
@@ -1138,7 +1138,7 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
             # in the unlikely event our hello command has been remapped
             if not cmd.upper() in self.trackedCmds:
                 self.trackedCmds.append(cmd.upper())
-
+        
         # Wait for moves to finish before turning off the spindle
         if self.suppressM400 and cmd.upper().startswith('M400'):
             self._logger.debug('Rewriting M400 as %s' % self.dwellCommand)

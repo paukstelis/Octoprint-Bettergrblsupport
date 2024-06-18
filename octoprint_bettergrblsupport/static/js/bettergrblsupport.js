@@ -31,7 +31,7 @@ $(function() {
         self.webcamHlsEnabled = ko.observable(false);
         self.webcamError = ko.observable(false);
 
-        self.origin_axes = ko.observableArray(["Z", "Y", "X", "XZ","XZA","ALL"]);
+        self.origin_axes = ko.observableArray(["Z", "X", "XZ","XZA","ALL"]);
         self.origin_axis = ko.observable("XZ");
 
         self.coordinate_systems = ko.observableArray(["G54", "G55", "G56", "G57", "G58", "G59"]);

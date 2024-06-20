@@ -1631,8 +1631,10 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                     self._printer.commands("G0 G90 Y0")
                 elif axis == "Z":
                     self._printer.commands("G0 G90 Z0")
-                elif axis == "XY":
-                    self._printer.commands("G0 G90 X0 Y0")
+                elif axis == "XZ":
+                    self._printer.commands("G0 G90 X0 Z0")
+                elif axis == "XZA":
+                    self._printer.commands("G0 G90 X0 Z0 A0")
                 elif axis == "A":
                     self._printer.commands("G0 G90 A0")
                 elif axis == "B":

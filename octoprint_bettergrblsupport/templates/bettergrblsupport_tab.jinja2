@@ -46,10 +46,6 @@
            <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: xPos()"></strong></td>
         </tr>
         <tr>
-           <td style="padding: 3px 10px 0px 5px;" align="right" valign="middle">Y</td>
-           <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: yPos()"></strong></td>
-        </tr>
-        <tr>
            <td style="padding: 3px 10px 0px 5px;" align="right" valign="middle">Z</td>
            <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: zPos()"></strong></td>
         </tr>
@@ -124,18 +120,18 @@
          </tr>
          <tr>
             <td style="padding: 0px 0px 10px 0px;">
-               <button id="control-zup" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('up')}">
+               <button id="control-zup" class="btn box" style="visibility: hidden; border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('up')}">
                  <i class="fa fa-arrow-up"></i>
                </button>
             </td>
             <td style="padding: 0px 0px 10px 0px;">
-               <button class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('northwest')}, mousedown: function() {jog('northwest')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <button class="btn box" style="visibility: hidden; border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('northwest')}, mousedown: function() {jog('northwest')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                  <i class="fa fa-arrow-up" style="transform: rotate(-45deg);"></i>
                </button>
-               <button id="control-north" class="btn box" style="border: 1px solid; margin: 0px 5px 0px 5px; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('north')}, mousedown: function() {jog('north')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
-                 <i class="fa fa-arrow-up"></i>
+               <button id="control-zdown" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('down')}">
+               <i class="fa fa-arrow-up"></i>
                </button>
-               <button class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('northeast')}, mousedown: function() {jog('northeast')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <button class="btn box" style="visibility: hidden; border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('northeast')}, mousedown: function() {jog('northeast')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                  <i class="fa fa-arrow-up" style="transform: rotate(45deg);"></i>
                </button>
             </td>
@@ -160,18 +156,18 @@
          </tr>
          <tr>
             <td style="padding: 0px 0px 20px 0px;">
-               <button id="control-zdown" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('down')}">
+               <button id="control-zdown" class="btn box" style="visibility: hidden; border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('down')}">
                <i class="fa fa-arrow-down"></i>
                </button>
             </td>
             <td style="padding: 0px 0px 20px 0px;">
-               <button class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('southwest')}, mousedown: function() {jog('southwest')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <button class="btn box" style="visibility: hidden;border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('southwest')}, mousedown: function() {jog('southwest')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                <i class="fa fa-arrow-down" style="transform: rotate(45deg);"></i>
                </button>
-               <button id="control-south" class="btn box" style="border: 1px solid; margin: 0px 5px 0px 5px; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('south')}, mousedown: function() {jog('south')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
-               <i class="fa fa-arrow-down"></i>
+               <button id="control-zup" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="enable: isIdleOrJogging() && operator() != 'J', click: function() {moveHead('up')}">
+                 <i class="fa fa-arrow-down"></i>
                </button>
-               <button class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('southeast')}, mousedown: function() {jog('southeast')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <button class="btn box" style="visibility: hidden; border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('southeast')}, mousedown: function() {jog('southeast')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                <i class="fa fa-arrow-down" style="transform: rotate(-45deg);"></i>
                </button>
             </td>
@@ -191,11 +187,11 @@
          <tr>
          <!-- ko if: settings.settings.plugins.bettergrblsupport.hasA -->
             <td style="padding: 0px 0px 10px 0px;">
-               <button id="control-a-left" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-right')}, mousedown: function() {jog('a-right')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
-               <i class="fa fa-rotate-left"></i>
-               </button>
                <button id="control-a-right" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-left')}, mousedown: function() {jog('a-left')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
                <i class="fa fa-rotate-right"></i>
+               </button>
+               <button id="control-a-left" class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="event: { touchstart: function() {jog('a-right')}, mousedown: function() {jog('a-right')}, touchend: function() {cancelJog()}, mouseup: function() {cancelJog()}}, enable: isIdleOrJogging()">
+               <i class="fa fa-rotate-left"></i>
                </button>
             </td>
          <!-- /ko -->

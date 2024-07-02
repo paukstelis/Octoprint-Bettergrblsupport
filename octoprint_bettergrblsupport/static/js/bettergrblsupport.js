@@ -1515,7 +1515,7 @@ $(function() {
             fastAxis = Math.abs(y);
           }
   
-          OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Z" + y*-1 + " F" + scaleValue(fastAxis, [1,20], [100,1000]));
+          OctoPrint.control.sendGcode("$J=G91 G21 X" + x + " Z" + y*-1 + " F" + scaleValue(fastAxis, [1,20], [100,600]));
           console.log("x=" + x + " z=" + y);
         }
       }

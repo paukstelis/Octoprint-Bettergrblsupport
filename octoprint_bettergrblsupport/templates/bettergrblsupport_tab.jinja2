@@ -74,10 +74,6 @@
            <td style="padding: 3px 10px 0px 5px;" align="right" valign="middle">Feed</td>
            <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: speed()"></strong></td>
         </tr>
-        <tr style="cursor: pointer;" data-bind="click: function() { coolClick(); }">
-           <td style="padding: 3px 10px 0px 5px;" align="right" valign="middle">Cool</td>
-           <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: coolant()"></strong></td>
-        </tr>
         <tr style="cursor: pointer;" data-bind="click: function() { moveClick(); }">
            <td style="padding: 3px 10px 0px 5px;" align="right" valign="middle">Move</td>
            <td style="padding: 3px 5px 0px 5px;" align="right" valign="middle"><strong data-bind="text: positioning()"></strong></td>
@@ -107,6 +103,7 @@
                <h5>&nbsp;</h5>
             </td>
             <td style="padding: 0px 0px 10px 0px; transform: translate(-5px);" align="left">
+               <label>Zero</label>
                <button class="btn box" style="border: 1px solid; width: 40px; height: 40px" data-bind="enable: is_operational() && !is_printing() && state() == 'Idle', click: function() { sendCommand('origin') }">
                <i class="fa fa-crosshairs"></i>
                </button>

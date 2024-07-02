@@ -1796,27 +1796,27 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
         # dev channel check
         if useDevChannel:
             return dict(bettergrblsupport=dict(
-                displayName='Better Grbl Support (Development Branch)',
+                displayName='LatheEngraver Support (Development Branch)',
                 type='github_commit',
-                user='synman',
-                repo='OctoPrint-Bettergrblsupport',
+                user='paukstelis',
+                repo='OctoPrint-LatheEngraver',
                 branch="devel",
                 current="fd0b1bac7a23ba4b01f58353c7a19c6bc4ea219e",
                 method="pip",
-                pip='https://github.com/synman/Octoprint-Bettergrblsupport/archive/refs/heads/devel.zip',
+                pip='https://github.com/paukstelis/Octoprint-LatheEngraver/archive/refs/heads/devel.zip',
                 restart='octoprint'))
         else:
             return dict(bettergrblsupport=dict(
-                displayName='Better Grbl Support',
+                displayName='LatheEngraver Support',
                 displayVersion=self._plugin_version,
                 type='github_release',
-                user='synman',
-                repo='OctoPrint-Bettergrblsupport',
+                user='paukstelis',
+                repo='OctoPrint-LatheEngraver',
                 current=self._plugin_version,
                 stable_branch={
                         "name": "Stable",
-                        "branch": "master",
-                        "commitish": ["master"],
+                        "branch": "main",
+                        "commitish": ["main"],
                     },
                 prerelease_branches=[
                         {
@@ -1825,14 +1825,14 @@ class BetterGrblSupportPlugin(octoprint.plugin.SettingsPlugin,
                             "commitish": ["rc", "master"],
                         }
                     ],
-                pip='https://github.com/synman/OctoPrint-Bettergrblsupport/archive/{target_version}.zip'))
+                pip='https://github.com/paukstelis/OctoPrint-LatheEngraver/archive/{target_version}.zip'))
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
 
-__plugin_name__ = 'Better Grbl Support'
+__plugin_name__ = 'LatheEngraver Support'
 __plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
